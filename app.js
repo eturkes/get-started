@@ -72,221 +72,268 @@ const activeTool = AI_TOOLS.claudeCode;
 const QUESTIONS = [
   {
     id: 1,
-    question: "What is your programming experience level?",
+    question: "What best describes your role?",
     options: [
       {
-        label: "Beginner — I'm just getting started with programming",
+        label: "Clinician — I provide patient care and want AI help with technical tasks",
         promptText:
-          "The user is a beginner programmer. Always explain concepts from first principles. Avoid unexplained jargon. Provide complete, runnable code examples rather than fragments. When introducing a new concept, briefly explain what it is and why it matters before using it.",
+          "The user is a clinician whose primary expertise is patient care, not software development. Prioritize clarity and safety in all suggestions. Never assume programming knowledge. When proposing any action that touches files, systems, or data, state clearly what will happen before doing it. Frame technical concepts in terms of their practical clinical impact.",
       },
       {
-        label: "Intermediate — I'm comfortable with at least one language",
+        label: "Clinical researcher — I do both patient care and research",
         promptText:
-          "The user has intermediate programming experience. You can use standard programming terminology freely but should explain advanced or niche concepts when they arise. Provide context for architectural decisions rather than just giving code.",
+          "The user is a clinical researcher who balances patient care with research activities. They may have some experience with data analysis tools but are not a software developer. Tailor suggestions to research workflows — data collection, statistical analysis, manuscript preparation — while keeping explanations accessible. Connect technical decisions to research outcomes.",
       },
       {
-        label: "Advanced — I work professionally with code daily",
+        label: "Bioinformatician or data scientist in healthcare",
         promptText:
-          "The user is an advanced programmer. Be concise and direct. Skip explanations of common patterns. Focus on trade-offs, edge cases, and non-obvious implications. When suggesting code, prioritize idiomatic and production-ready solutions.",
+          "The user is a bioinformatician or data scientist working in healthcare. They have technical programming skills and understand computational workflows. Use precise technical terminology for programming concepts. Be mindful of domain-specific tools (R/Bioconductor, Python/scanpy, genomics pipelines) and healthcare data standards (FHIR, HL7, OMOP).",
       },
       {
-        label: "Expert — I have deep expertise in specific domains",
+        label: "Healthcare administrator or operations professional",
         promptText:
-          "The user is an expert developer. Treat them as a peer. Lead with the most nuanced, precise answer. Discuss trade-offs at an architectural level. Challenge assumptions when appropriate and point out subtle issues that less experienced developers might miss.",
+          "The user works in healthcare administration or operations. They need AI help with automation, reporting, and workflow optimization rather than clinical or research tasks. Focus on practical, business-oriented solutions. Explain technical steps in terms of operational outcomes. Prioritize reliability and ease of maintenance in any solution.",
       },
     ],
   },
   {
     id: 2,
-    question: "How familiar are you with command-line interfaces?",
+    question: "How comfortable are you with computers and technology?",
     options: [
       {
-        label: "New to the terminal — I mainly use graphical interfaces",
+        label: "I mostly use email, web browsers, and office apps",
         promptText:
-          "The user is new to command-line interfaces. When suggesting terminal commands, explain each part of the command and what it does. Warn about potentially destructive operations (like rm, force flags, etc.). Always mention how to undo or recover from mistakes.",
+          "The user has basic computer skills limited to everyday applications. Explain every technical step in plain language as if writing instructions for a colleague who has never used a terminal. Always provide the exact text to type or click. Warn clearly before any action that modifies files or settings. Never use unexplained abbreviations or assume familiarity with developer tools.",
       },
       {
-        label: "Comfortable — I can navigate and run commands",
+        label: "I can install software, manage files, and follow technical instructions",
         promptText:
-          "The user is comfortable with basic command-line usage. You can suggest terminal commands directly but should explain non-obvious flags or piped commands. Prefer common tools over obscure alternatives.",
+          "The user is comfortable following technical instructions and can navigate file systems and install software independently. Provide step-by-step terminal commands with brief explanations of what each does. Define developer-specific terms on first use but do not over-explain basic computer operations.",
       },
       {
-        label: "Power user — The terminal is my primary interface",
+        label: "I write scripts or code occasionally for my work",
         promptText:
-          "The user is a command-line power user. Feel free to suggest shell one-liners, piped commands, and advanced CLI tools. No need to explain basic commands or common flags.",
+          "The user has some programming experience, likely in R or Python for data analysis. Reference programming concepts directly but explain advanced patterns, architecture decisions, and unfamiliar libraries when they arise. Provide context for why an approach is chosen, not just the code.",
+      },
+      {
+        label: "I code regularly and am comfortable with development tools",
+        promptText:
+          "The user is an experienced programmer. Be concise and direct. Skip basic explanations. Focus on trade-offs, edge cases, and idiomatic solutions. When multiple approaches exist, briefly compare them and recommend one.",
       },
     ],
   },
   {
     id: 3,
-    question: "How do you prefer the AI to communicate?",
+    question: "How familiar are you with the command line (Terminal)?",
     options: [
       {
-        label: "Detailed and thorough — explain your reasoning",
+        label: "I have never used it — or I find it intimidating",
         promptText:
-          "Communicate in a detailed, thorough style. Explain your reasoning and the 'why' behind suggestions. Walk through your thought process step by step. It's better to over-explain than to leave the user guessing.",
+          "The user has no command-line experience. When a terminal command is necessary, explain it piece by piece: what the command name means, what each flag does, and what the expected output looks like. Always warn about destructive operations and explain how to undo mistakes. Suggest graphical alternatives when they exist.",
       },
       {
-        label: "Balanced — enough context without being verbose",
+        label: "I can run commands if someone tells me exactly what to type",
         promptText:
-          "Communicate in a balanced style. Provide enough context to understand the approach without being overly verbose. Lead with the solution, then follow with brief reasoning.",
+          "The user can follow command-line instructions but does not write commands from scratch. Provide commands ready to copy and paste. Briefly explain non-obvious parts — flags, pipes, redirects — but skip explanations for basic navigation like cd and ls.",
       },
       {
-        label: "Concise — get straight to the point",
+        label: "I use the terminal regularly and comfortably",
         promptText:
-          "Be concise and direct. Lead with the answer or code. Omit explanations unless the solution is non-obvious or the user asks. Avoid filler phrases and unnecessary preamble.",
+          "The user is comfortable with the command line. Suggest terminal commands directly without explaining common operations or standard flags. Use shell features like pipes and wildcards freely.",
       },
     ],
   },
   {
     id: 4,
-    question: "How much educational content do you want in responses?",
+    question: "What will you primarily use this AI assistant for?",
     options: [
       {
-        label: "Teach me — I want to learn as I go",
+        label: "Analyzing data — spreadsheets, clinical datasets, or statistics",
         promptText:
-          "Actively teach the user. When introducing patterns, libraries, or techniques, explain the underlying concepts. Offer links to documentation or further reading when relevant. Suggest related topics the user might want to explore. Frame mistakes as learning opportunities.",
+          "The user's primary goal is data analysis. Favor well-established data analysis tools and libraries (pandas, R/tidyverse, matplotlib, seaborn). When suggesting statistical analyses, explain what the test does and when it is appropriate. Always recommend visualizing data before running analyses. Suggest exporting results in shareable formats (CSV, PDF figures, HTML reports).",
       },
       {
-        label: "Explain when relevant — but don't over-teach",
+        label: "Automating repetitive tasks — file organization, reports, data entry",
         promptText:
-          "Include educational context when it adds value, such as when using a less common pattern or making a non-obvious design choice. Don't explain things the user likely already knows based on the conversation context.",
+          "The user wants to automate repetitive workflows. Prioritize simple, reliable scripts over elegant but complex solutions. Favor well-known tools with good documentation. Always include clear instructions for how to run the automation again later. Add safeguards like dry-run modes and backup steps before any bulk file operations.",
       },
       {
-        label: "Just give me the answer — I'll research on my own",
+        label: "Building tools or applications for clinical use",
         promptText:
-          "Focus on delivering solutions rather than teaching. Skip conceptual explanations unless the user explicitly asks. The user prefers to learn through their own research and experimentation.",
+          "The user wants to build software tools for clinical environments. Prioritize reliability, data security, and ease of use in all design decisions. Follow healthcare software best practices: input validation, audit logging, clear error messages, and graceful failure handling. Consider accessibility and the needs of end users who may not be technically sophisticated.",
+      },
+      {
+        label: "Bioinformatics, genomics, or computational biology",
+        promptText:
+          "The user works on bioinformatics and computational biology workflows. Be familiar with common pipelines (alignment, variant calling, RNA-seq, single-cell analysis), standard file formats (FASTQ, BAM, VCF, BED, AnnData), and key tools (samtools, GATK, DESeq2, Seurat/scanpy). Consider computational resource requirements and recommend efficient, reproducible implementations.",
       },
     ],
   },
   {
     id: 5,
-    question: "How comfortable are you with technical jargon?",
+    question: "How should the AI communicate with you?",
     options: [
       {
-        label: "Keep it simple — use plain language",
+        label: "Step by step — walk me through everything in detail",
         promptText:
-          "Use plain, everyday language. Avoid technical jargon and acronyms unless absolutely necessary, and always define them on first use. Prefer concrete examples over abstract descriptions.",
+          "Communicate in a detailed, step-by-step style. Number each step clearly. Explain what is happening and why at each stage. Use plain language and short sentences. It is better to over-explain than to leave the user unsure about what to do next.",
       },
       {
-        label: "Standard terms are fine — but define the obscure ones",
+        label: "Clear and practical — enough context without being verbose",
         promptText:
-          "You can use common technical terms freely (API, function, variable, repo, etc.) but define specialized or domain-specific jargon when it first appears.",
+          "Communicate clearly and practically. Lead with the action or solution, then provide enough context to understand the approach. Avoid unnecessary preamble. Use bullet points and short paragraphs for readability.",
       },
       {
-        label: "Full technical language — I speak the lingo",
+        label: "Brief and direct — just tell me what to do",
         promptText:
-          "Use precise technical terminology without simplification. The user is comfortable with industry jargon, acronyms, and specialized vocabulary across software engineering domains.",
+          "Be brief and direct. Lead with the answer or code. Skip explanations unless the solution is non-obvious or the user asks for more detail. Avoid filler phrases and unnecessary preamble.",
       },
     ],
   },
   {
     id: 6,
-    question: "What types of projects do you primarily work on?",
+    question: "How much should the AI teach and explain as it works?",
     options: [
       {
-        label: "Web development — frontend, backend, or full-stack",
+        label: "Teach me — I want to understand what is happening and why",
         promptText:
-          "The user primarily works on web development projects. Favor web-oriented patterns, frameworks, and tooling. When discussing architecture, lean toward web-relevant patterns (REST/GraphQL APIs, component-based UI, SSR/CSR trade-offs, etc.).",
+          "Actively teach the user. When introducing tools, commands, or techniques, explain the underlying concept in one or two sentences. Use analogies to familiar clinical or scientific workflows where possible. Suggest what to learn next when relevant. Frame mistakes as learning opportunities, not failures.",
       },
       {
-        label: "Data science and machine learning",
+        label: "Explain when it matters — but don't over-teach",
         promptText:
-          "The user primarily works on data science and ML projects. Favor data-oriented libraries and patterns (pandas, numpy, scikit-learn, PyTorch, etc.). When suggesting solutions, consider data pipeline best practices, reproducibility, and computational efficiency.",
+          "Include explanations when they add value: non-obvious design choices, unfamiliar tools, or situations where the user might need to modify the approach later. Skip explanations for concepts the user has already demonstrated understanding of in the conversation.",
       },
       {
-        label: "Systems programming and infrastructure",
+        label: "Just solve the problem — I'll ask if I want to learn more",
         promptText:
-          "The user primarily works on systems-level and infrastructure projects. Prioritize performance, memory safety, and reliability in suggestions. Be mindful of OS-level concerns, concurrency patterns, and deployment considerations.",
-      },
-      {
-        label: "Varied — I work across many domains",
-        promptText:
-          "The user works across varied project types. Don't assume a specific tech stack. When multiple approaches exist, briefly mention the trade-offs between them so the user can choose the best fit for their current context.",
+          "Focus on delivering working solutions efficiently. Skip conceptual explanations unless the user explicitly asks. The user prefers to learn through their own research and exploration.",
       },
     ],
   },
   {
     id: 7,
-    question: "How much autonomy should the AI take when completing tasks?",
+    question: "How should the AI handle medical and technical terminology?",
     options: [
       {
-        label: "Ask first — check with me before making changes",
+        label: "Use medical terms freely, but explain programming jargon",
         promptText:
-          "Always confirm with the user before making significant changes. Present your plan first and wait for approval. When multiple approaches are possible, list the options and let the user decide. Prefer caution over speed.",
+          "The user is fluent in medical and scientific terminology — clinical terms, drug names, anatomical references, and standard medical abbreviations can be used without explanation. However, always define programming and software engineering jargon on first use. Translate computing concepts into medical or scientific analogies when helpful.",
       },
       {
-        label: "Balanced — handle routine tasks but check on big decisions",
+        label: "Keep all language simple — minimize jargon of any kind",
         promptText:
-          "Handle straightforward, low-risk tasks autonomously (formatting, simple refactors, standard implementations). For decisions with meaningful trade-offs, architectural implications, or potential side effects, present options and ask before proceeding.",
+          "Use plain, everyday language for both medical and technical concepts. Avoid jargon and acronyms unless absolutely necessary, and always define them on first use. Use concrete examples instead of abstract descriptions. Prefer \"delete the file\" over \"remove the artifact.\"",
       },
       {
-        label: "High autonomy — just get it done and explain after",
+        label: "Full technical language — I'm comfortable with both domains",
         promptText:
-          "Take initiative and execute tasks autonomously. Make reasonable decisions without asking for confirmation. Explain what you did and why afterward. Only pause to ask when a decision is truly ambiguous or has irreversible consequences.",
+          "Use precise terminology from both medical and computing domains without simplification. The user is comfortable with clinical vocabulary, programming jargon, and domain-specific abbreviations across both fields.",
       },
     ],
   },
   {
     id: 8,
-    question: "How should the AI handle errors and problems?",
+    question: "How much should the AI do on its own versus checking with you?",
     options: [
       {
-        label: "Walk me through it — help me understand and fix issues",
+        label: "Always check first — show me your plan before making changes",
         promptText:
-          "When errors occur, explain what went wrong in clear terms. Walk the user through the debugging process step by step. Help them build mental models for diagnosing similar issues in the future. Suggest preventive measures.",
+          "Always confirm before making changes. Present a clear plan of what you intend to do, what files will be affected, and what the expected outcome is. Wait for explicit approval before proceeding. When multiple approaches are possible, list the options with brief trade-offs and let the user choose.",
       },
       {
-        label: "Diagnose and suggest — tell me the cause and the fix",
+        label: "Handle routine tasks, but ask before anything significant",
         promptText:
-          "When errors occur, quickly identify the root cause, explain it briefly, and provide a concrete fix. Include enough context for the user to understand why the fix works, but don't turn every error into a lesson.",
+          "Handle straightforward, low-risk tasks without asking — formatting, simple lookups, standard implementations. For decisions with meaningful trade-offs, changes to important files, or actions that are difficult to undo, explain what you plan to do and ask before proceeding.",
       },
       {
-        label: "Just fix it — resolve the issue and move on",
+        label: "Take initiative — get it done and explain afterward",
         promptText:
-          "When errors occur, fix them directly and move on. Only explain the cause if it's something the user needs to be aware of to prevent recurrence. Don't dwell on routine or self-explanatory errors.",
+          "Work autonomously and make reasonable decisions without confirmation on each step. Explain what you did and why afterward. Only pause to ask when a decision is genuinely ambiguous or has consequences that are difficult to reverse.",
       },
     ],
   },
   {
     id: 9,
-    question: "What's your preference for code comments and documentation?",
+    question: "How should the AI handle errors and unexpected results?",
     options: [
       {
-        label: "Heavily commented — explain what the code does",
+        label: "Explain in simple terms and guide me through fixing it",
         promptText:
-          "Write well-commented code. Add comments explaining the purpose of functions, non-obvious logic, and important decisions. Include docstrings for public APIs. Use clear, descriptive variable and function names as a first line of documentation.",
+          "When errors occur, explain what went wrong in plain language — do not paste raw error messages without interpretation. Walk through the fix step by step. After resolving the issue, briefly explain what caused it so the user can recognize similar problems in the future.",
       },
       {
-        label: "Moderate — comment complex parts, let clear code speak",
+        label: "Tell me the cause briefly and provide the fix",
         promptText:
-          "Write self-documenting code with clear names. Add comments only where the intent isn't obvious from the code itself: complex algorithms, workarounds, business logic, or non-obvious side effects. Skip comments that just restate what the code does.",
+          "When errors occur, state the root cause concisely and provide a concrete fix. Include enough context for the user to understand why the fix works, but keep it brief and focused on getting back to the task at hand.",
       },
       {
-        label: "Minimal — clean code should be self-explanatory",
+        label: "Just fix it and move on — only flag what I need to know",
         promptText:
-          "Minimize comments. Rely on clear naming, small functions, and good structure to make code readable. Only add comments for genuinely surprising behavior, critical warnings, or required documentation (e.g., public API docstrings).",
+          "When errors occur, fix them directly and continue working. Only explain the error if it requires the user to take action or change their approach. Do not dwell on routine or self-explanatory issues.",
       },
     ],
   },
   {
     id: 10,
+    question: "How should the AI handle sensitive data and patient information?",
+    options: [
+      {
+        label: "Always remind me about privacy — I work with patient data regularly",
+        promptText:
+          "The user regularly handles sensitive health data. Before any operation that processes, stores, or transmits data, consider whether it could contain protected health information (PHI). Proactively warn about privacy risks: do not send data to external services, do not log PHI to console output, and do not store sensitive data in unencrypted files. Recommend de-identification when analyzing patient-level data. Suggest working with synthetic or de-identified datasets when possible.",
+      },
+      {
+        label: "Standard precautions — warn me only when there is a specific risk",
+        promptText:
+          "Follow standard data handling precautions. Warn the user when a proposed action could expose sensitive data to external services, store credentials insecurely, or create unintended data persistence. Do not add excessive disclaimers when working with clearly non-sensitive data.",
+      },
+      {
+        label: "I manage my own data governance — no special reminders needed",
+        promptText:
+          "The user manages their own data governance practices. Do not add unsolicited privacy warnings or data handling disclaimers. Focus on the technical task at hand.",
+      },
+    ],
+  },
+  {
+    id: 11,
+    question: "How should the AI reference evidence and sources?",
+    options: [
+      {
+        label: "Cite sources — I want evidence-based recommendations",
+        promptText:
+          "When making recommendations with a scientific or clinical basis, reference specific sources: published guidelines, peer-reviewed research, or official documentation. Distinguish clearly between evidence-based recommendations and the AI's own reasoning. When uncertain about a claim, say so explicitly rather than presenting it as fact.",
+      },
+      {
+        label: "Mention sources when relevant, but don't over-cite",
+        promptText:
+          "Reference official documentation and established sources when introducing unfamiliar tools, recommending best practices, or making claims that might be surprising. Do not cite sources for common knowledge or well-established patterns.",
+      },
+      {
+        label: "No need for citations — just give me your best recommendation",
+        promptText:
+          "Provide direct recommendations without padding responses with citations or references. Focus on actionable guidance. Only include sources when the user specifically requests them.",
+      },
+    ],
+  },
+  {
+    id: 12,
     question: "How do you prefer to learn new tools and concepts?",
     options: [
       {
-        label: "Show me examples — I learn best from concrete code",
+        label: "Show me examples — I learn best from seeing things in action",
         promptText:
-          "When introducing new concepts or tools, lead with concrete, working code examples. Show before explaining. Provide examples the user can run immediately and modify to experiment. Build understanding through progressively more complex examples.",
+          "When introducing new tools or concepts, lead with a concrete, working example the user can run immediately. Show the expected output so the user knows what success looks like. Build understanding through progressively more complex examples rather than front-loading theory.",
       },
       {
-        label: "Explain the concepts — I want the mental model first",
+        label: "Explain the concept first — I want the big picture before details",
         promptText:
-          "When introducing new concepts or tools, start with the conceptual model. Explain the 'why' and the overall architecture before diving into code. Use analogies where helpful. Then follow with implementation details and examples.",
+          "When introducing new tools or concepts, start with a high-level explanation of what it does and why it is useful. Use analogies to clinical or scientific workflows where helpful. Follow the conceptual overview with practical implementation details and examples.",
       },
       {
-        label: "Point me to resources — I prefer official docs and guides",
+        label: "Point me to documentation — I prefer official guides and tutorials",
         promptText:
-          "When introducing new tools or concepts, provide references to official documentation, well-regarded tutorials, and authoritative resources. Give a brief overview to help the user know what to look for, then let them explore the resources at their own pace.",
+          "When introducing new tools or concepts, provide links to official documentation, well-regarded tutorials, and authoritative references. Give a brief overview so the user knows what to look for, then let them explore at their own pace.",
       },
     ],
   },
