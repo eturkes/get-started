@@ -1,6 +1,6 @@
 # Get Started
 
-A web app that guides users through a questionnaire to build a customized system prompt for AI coding assistants. Currently targets **Claude Code**.
+A web app that guides users through a questionnaire to build a customized system prompt for AI coding assistants. Tailored for **clinical and healthcare settings**. Currently targets **Claude Code**.
 
 No build step, no dependencies. Open `index.html` in a browser.
 
@@ -28,7 +28,7 @@ On screens narrower than 820px, the grid collapses to a single column (question 
 
 ### Data Model
 
-All questions live in the `QUESTIONS` array in `app.js` (line ~72). Each entry:
+All 12 questions live in the `QUESTIONS` array in `app.js` (line ~72). Each entry:
 
 ```js
 {
@@ -83,6 +83,23 @@ The `AI_TOOLS` object at the top of `app.js` (line ~12) is the extension point f
 ```
 
 The active tool is set by `const activeTool = AI_TOOLS.claudeCode`. To add another tool, add an entry to `AI_TOOLS` and point `activeTool` at it (or build a UI selector).
+
+### Question Topics
+
+The questionnaire covers 12 questions tailored for clinical and healthcare professionals:
+
+1. Role (clinician, clinical researcher, bioinformatician, administrator)
+2. Technical comfort level
+3. Command-line familiarity
+4. Primary use case (data analysis, automation, clinical tools, bioinformatics)
+5. Communication style preference
+6. Teaching and explanation depth
+7. Medical vs. technical terminology handling
+8. AI autonomy level
+9. Error handling approach
+10. Sensitive data and patient information (PHI) practices
+11. Evidence and source citation preferences
+12. Learning style for new tools
 
 ## Planned Features (Not Yet Implemented)
 
