@@ -13,6 +13,12 @@
 }
 
 :root {
+  --radius: 8px;
+  --radius-lg: 12px;
+  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+
+  /* Dark theme (default) */
   --clr-bg: #0f1117;
   --clr-surface: #181a20;
   --clr-surface-alt: #1e2028;
@@ -24,10 +30,42 @@
   --clr-accent-glow: rgba(192, 132, 252, 0.15);
   --clr-success: #34d399;
   --clr-skip: #6b7280;
-  --radius: 8px;
-  --radius-lg: 12px;
-  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+  --clr-option-hover-bg: #252730;
+  --clr-option-hover-border: #3a3d4a;
+}
+
+[data-theme="light"] {
+  --clr-bg: #f5f5f7;
+  --clr-surface: #ffffff;
+  --clr-surface-alt: #eeeef0;
+  --clr-border: #d4d4d8;
+  --clr-text: #1c1c1e;
+  --clr-text-dim: #6b6b73;
+  --clr-accent: #7c3aed;
+  --clr-accent-dim: #6d28d9;
+  --clr-accent-glow: rgba(124, 58, 237, 0.1);
+  --clr-success: #059669;
+  --clr-skip: #9ca3af;
+  --clr-option-hover-bg: #e8e8ec;
+  --clr-option-hover-border: #c0c0c8;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --clr-bg: #f5f5f7;
+    --clr-surface: #ffffff;
+    --clr-surface-alt: #eeeef0;
+    --clr-border: #d4d4d8;
+    --clr-text: #1c1c1e;
+    --clr-text-dim: #6b6b73;
+    --clr-accent: #7c3aed;
+    --clr-accent-dim: #6d28d9;
+    --clr-accent-glow: rgba(124, 58, 237, 0.1);
+    --clr-success: #059669;
+    --clr-skip: #9ca3af;
+    --clr-option-hover-bg: #e8e8ec;
+    --clr-option-hover-border: #c0c0c8;
+  }
 }
 
 html {
@@ -48,6 +86,9 @@ body {
   padding: 1.2rem 2rem;
   border-bottom: 1px solid var(--clr-border);
   background: var(--clr-surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .top-bar h1 {
@@ -60,6 +101,26 @@ body {
   color: var(--clr-text-dim);
   font-size: 0.85rem;
   margin-top: 0.2rem;
+}
+
+/* --- Theme toggle ---------------------------------------------------- */
+.theme-toggle {
+  background: var(--clr-surface-alt);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius);
+  color: var(--clr-text-dim);
+  cursor: pointer;
+  padding: 0.45rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.theme-toggle:hover {
+  color: var(--clr-text);
+  border-color: var(--clr-option-hover-border);
 }
 
 /* --- Split view (outer container) ------------------------------------ */
@@ -227,8 +288,8 @@ body {
 }
 
 .option-btn:hover {
-  background: #252730;
-  border-color: #3a3d4a;
+  background: var(--clr-option-hover-bg);
+  border-color: var(--clr-option-hover-border);
 }
 
 .option-btn.selected {

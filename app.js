@@ -709,6 +709,48 @@ function buildPromptString() {
 }
 
 // -----------------------------------------------------------------------
+// Theme Toggle
+// -----------------------------------------------------------------------
+
+const themeToggle = document.getElementById("theme-toggle");
+const iconSun = document.getElementById("icon-sun");
+const iconMoon = document.getElementById("icon-moon");
+
+function getEffectiveTheme() {
+  const stored = localStorage.getItem("theme");
+  if (stored === "dark" || stored === "light") return stored;
+  return window.matchMedia("(prefers-color-scheme: light)").matches
+    ? "light"
+    : "dark";
+}
+
+function applyTheme(theme) {
+  if (theme === "light") {
+    document.documentElement.setAttribute("data-theme", "light");
+    iconSun.style.display = "none";
+    iconMoon.style.display = "block";
+  } else {
+    document.documentElement.setAttribute("data-theme", "dark");
+    iconSun.style.display = "block";
+    iconMoon.style.display = "none";
+  }
+}
+
+themeToggle.addEventListener("click", () => {
+  const next = getEffectiveTheme() === "dark" ? "light" : "dark";
+  localStorage.setItem("theme", next);
+  applyTheme(next);
+});
+
+window
+  .matchMedia("(prefers-color-scheme: light)")
+  .addEventListener("change", () => {
+    if (!localStorage.getItem("theme")) applyTheme(getEffectiveTheme());
+  });
+
+applyTheme(getEffectiveTheme());
+
+// -----------------------------------------------------------------------
 // Initialize
 // -----------------------------------------------------------------------
 renderQuestions();

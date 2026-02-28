@@ -7,9 +7,9 @@ No build step, no dependencies. Open `index.html` in a browser.
 ## File Structure
 
 ```
-index.html   — Page shell: header, 2-col grid headers, scrollable content area, download bar
-style.css    — All styling: dark theme, CSS Grid layout, responsive breakpoints
-app.js       — All logic: data, state, rendering, ZIP generation, downloads
+index.html   — Page shell: header, theme toggle, 2-col grid headers, scrollable content area, download bar
+style.css    — All styling: light/dark themes, CSS Grid layout, responsive breakpoints
+app.js       — All logic: data, state, rendering, theme toggle, ZIP generation, downloads
 ```
 
 Everything is vanilla HTML/CSS/JS. The entire app lives in these three files.
@@ -113,6 +113,10 @@ These informed architectural decisions but are not built:
 - Cross-device sync
 - AI-powered prompt improvement based on user habits (paid feature)
 - Windows support
+
+## Theme
+
+The app supports light and dark modes. On first visit it matches the operating system preference via `prefers-color-scheme`. A toggle button in the header overrides this; the choice is persisted in `localStorage`. If the user has not explicitly toggled, the app continues to follow system changes.
 
 ## Key Design Decisions
 
