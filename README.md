@@ -2,7 +2,7 @@
 
 A web app that guides users through a questionnaire to build a customized system prompt for AI coding assistants. Tailored for **clinical and healthcare settings**. Currently targets **Claude Code**.
 
-No build step, no dependencies. Open `index.html` in a browser.
+No build step, no package dependencies. Open `index.html` in a browser. Fonts load from Google Fonts (requires internet on first visit).
 
 ## File Structure
 
@@ -117,6 +117,10 @@ These informed architectural decisions but are not built:
 ## Theme
 
 The app supports light and dark modes. On first visit it matches the operating system preference via `prefers-color-scheme`. A toggle button in the header overrides this; the choice is persisted in `localStorage`. If the user has not explicitly toggled, the app continues to follow system changes.
+
+**Typography**: Newsreader (serif) for display headings and question text, Outfit (geometric sans) for UI elements, JetBrains Mono for prompt preview. Loaded from Google Fonts.
+
+**Colors**: Dark mode uses deep charcoal (#0f1218) with sage-mint (#6ec4a0) and warm amber (#d4a054) accents. Light mode uses warm cream (#f7f4ee) with deep emerald (#2c6b4f) and amber. A gradient accent rule under the header and a gradient progress bar blend both accent colors.
 
 ## Key Design Decisions
 

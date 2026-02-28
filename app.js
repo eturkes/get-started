@@ -371,10 +371,11 @@ toolLabelEl.textContent = activeTool.name;
  *   2. .prompt-cell   (right column) — contains the prompt text block
  */
 function renderQuestions() {
-  QUESTIONS.forEach((q) => {
+  QUESTIONS.forEach((q, idx) => {
     // --- Left column: question card ---
     const qCell = document.createElement("div");
     qCell.className = "question-cell";
+    qCell.style.animationDelay = `${idx * 0.04}s`;
 
     const card = document.createElement("div");
     card.className = "question-card";
@@ -382,7 +383,7 @@ function renderQuestions() {
 
     const numEl = document.createElement("div");
     numEl.className = "question-number";
-    numEl.textContent = `Question ${q.id} of ${QUESTIONS.length}`;
+    numEl.textContent = String(q.id).padStart(2, "0");
     card.appendChild(numEl);
 
     const textEl = document.createElement("p");
@@ -534,6 +535,8 @@ function updateDownloadButton() {
 function updateProgress() {
   const answered = [...selections.values()].filter((v) => v !== undefined).length;
   progressEl.textContent = `${answered} / ${QUESTIONS.length} answered`;
+  const fillEl = document.getElementById("progress-fill");
+  if (fillEl) fillEl.style.width = `${(answered / QUESTIONS.length) * 100}%`;
 }
 
 // -----------------------------------------------------------------------
