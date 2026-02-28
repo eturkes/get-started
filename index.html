@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Get Started — AI Assistant Setup</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top header bar -->
+  <header class="top-bar">
+    <h1>Get Started</h1>
+    <p class="subtitle">Answer a few questions to build a custom system prompt for your AI assistant.</p>
+  </header>
+
+  <!-- Main split-view container -->
+  <main class="split-view">
+
+    <!-- Sticky column headers (2-col grid matching the content grid) -->
+    <div class="column-headers">
+      <div class="col-header">
+        <h2>Questionnaire</h2>
+        <span class="progress" id="progress">0 / 10 answered</span>
+      </div>
+      <div class="col-header col-header-right">
+        <h2>Your System Prompt</h2>
+        <span class="prompt-tool-label" id="tool-label">Claude Code</span>
+      </div>
+    </div>
+
+    <!-- Single scrollable content area (2-col grid: questions left, prompt blocks right) -->
+    <div class="content-scroll" id="content-scroll">
+      <!-- Placeholder overlay for the right column when nothing is answered -->
+      <p class="placeholder" id="placeholder">Answer questions on the left to start building your prompt&hellip;</p>
+      <!-- JS renders question-cell / prompt-cell pairs here -->
+    </div>
+
+    <!-- Download bar aligned to the right column -->
+    <div class="download-bar">
+      <div class="download-bar-spacer"></div>
+      <div class="download-bar-action">
+        <div class="download-buttons">
+          <button class="btn-download" id="btn-download-prompt" disabled>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Download Prompt
+          </button>
+          <button class="btn-download" id="btn-download-script" disabled>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download Install Script
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
