@@ -508,11 +508,15 @@ function renderQuestions() {
       listEl.className = "options-list";
 
       q.options.forEach((opt, idx) => {
-        listEl.appendChild(createOptionButton(q.id, idx, opt.label, false));
+        listEl.appendChild(createOptionButton(q.id, idx, opt.label));
       });
-      listEl.appendChild(createOptionButton(q.id, -1, "Skip this question", true));
 
       card.appendChild(listEl);
+
+      const hint = document.createElement("p");
+      hint.className = "skip-hint";
+      hint.textContent = "Leave blank to skip";
+      card.appendChild(hint);
     }
     qCell.appendChild(card);
     contentScroll.appendChild(qCell);
@@ -538,9 +542,9 @@ function renderQuestions() {
 /**
  * Create a single option button element.
  */
-function createOptionButton(questionId, optionIndex, label, isSkip) {
+function createOptionButton(questionId, optionIndex, label) {
   const btn = document.createElement("button");
-  btn.className = "option-btn" + (isSkip ? " skip-btn" : "");
+  btn.className = "option-btn";
   btn.type = "button";
 
   const radio = document.createElement("span");
@@ -620,6 +624,11 @@ function renderFreeformInputs(card, q) {
 
   card.appendChild(textarea);
   card.appendChild(convertBtn);
+
+  const hint = document.createElement("p");
+  hint.className = "skip-hint";
+  hint.textContent = "Leave blank to skip";
+  card.appendChild(hint);
 }
 
 // -----------------------------------------------------------------------
@@ -711,8 +720,7 @@ function updateCardStyles(questionId) {
   const buttons = card.querySelectorAll(".option-btn");
 
   buttons.forEach((btn, idx) => {
-    const btnOptionIndex = idx < q.options.length ? idx : -1;
-    btn.classList.toggle("selected", currentSelection === btnOptionIndex);
+    btn.classList.toggle("selected", currentSelection === idx);
   });
 
   card.classList.toggle("answered", currentSelection !== undefined);
@@ -780,11 +788,37 @@ function updateDownloadButton() {
 // -----------------------------------------------------------------------
 
 function updateProgress() {
-  const answered = [...selections.values()].filter((v) => v !== undefined).length;
+  const answered = [...selections.values()].filter(
+    (v) => v !== undefined && v !== -1
+  ).length;
   progressEl.textContent = `${answered} / ${QUESTIONS.length} answered`;
-  const fillEl = document.getElementById("progress-fill");
-  if (fillEl) fillEl.style.width = `${(answered / QUESTIONS.length) * 100}%`;
 }
+
+function updateProgressBar() {
+  const fillEl = document.getElementById("progress-fill");
+  if (!fillEl) return;
+
+  // Use whichever element actually scrolls (content-scroll or window)
+  let scrollTop, maxScroll;
+  const csMax = contentScroll.scrollHeight - contentScroll.clientHeight;
+
+  if (csMax > 0 && contentScroll.scrollTop > 0) {
+    scrollTop = contentScroll.scrollTop;
+    maxScroll = csMax;
+  } else {
+    scrollTop = window.scrollY;
+    maxScroll =
+      document.documentElement.scrollHeight -
+      document.documentElement.clientHeight;
+  }
+
+  const pct =
+    maxScroll > 0 ? Math.min((scrollTop / maxScroll) * 100, 100) : 0;
+  fillEl.style.width = `${pct}%`;
+}
+
+contentScroll.addEventListener("scroll", updateProgressBar, { passive: true });
+window.addEventListener("scroll", updateProgressBar, { passive: true });
 
 // -----------------------------------------------------------------------
 // ZIP Generation (preserves Unix executable permissions across download)
@@ -1032,3 +1066,4 @@ function initOSSelector() {
 renderQuestions();
 initOSSelector();
 updateProgress();
+updateProgressBar();

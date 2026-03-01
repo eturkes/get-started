@@ -50,8 +50,9 @@ Most questions use multiple-choice options. Question 15 is a `"freeform"` type w
 
 Application state is a single `Map<questionId, optionIndex>`:
 - `undefined` = unanswered (no entry in map)
-- `-1` = explicitly skipped
 - `0, 1, 2, ...` = selected option index
+
+Unanswered questions are left blank and excluded from the final prompt. Each question card shows a "Leave blank to skip" hint below its options.
 
 ### Prompt Building
 

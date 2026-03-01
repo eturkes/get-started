@@ -35,7 +35,6 @@
   --clr-warm-dim: #b08040;
   --clr-warm-glow: rgba(212, 160, 84, 0.08);
   --clr-success: #6ec4a0;
-  --clr-skip: #6b6d78;
   --clr-option-hover-bg: #1e2330;
   --clr-option-hover-border: #343a4d;
   --clr-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 1px 3px rgba(0, 0, 0, 0.15);
@@ -59,7 +58,6 @@
   --clr-warm-dim: #825e30;
   --clr-warm-glow: rgba(160, 120, 64, 0.06);
   --clr-success: #2c6b4f;
-  --clr-skip: #9ca0aa;
   --clr-option-hover-bg: #e8e5de;
   --clr-option-hover-border: #c8c4bc;
   --clr-card-shadow: 0 1px 4px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
@@ -84,8 +82,7 @@
     --clr-warm-dim: #825e30;
     --clr-warm-glow: rgba(160, 120, 64, 0.06);
     --clr-success: #2c6b4f;
-    --clr-skip: #9ca0aa;
-    --clr-option-hover-bg: #e8e5de;
+      --clr-option-hover-bg: #e8e5de;
     --clr-option-hover-border: #c8c4bc;
     --clr-card-shadow: 0 1px 4px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
     --clr-card-shadow-hover: 0 3px 12px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.05);
@@ -464,22 +461,13 @@ body::after {
   box-shadow: 0 0 0 1px var(--clr-accent-glow);
 }
 
-.option-btn.skip-btn {
-  color: var(--clr-skip);
+/* --- Skip hint ------------------------------------------------------- */
+.skip-hint {
+  margin-top: 0.65rem;
+  font-size: 0.78rem;
+  color: var(--clr-text-dim);
   font-style: italic;
-  border-style: dashed;
-  border-color: var(--clr-border-subtle);
-}
-
-.option-btn.skip-btn:hover {
-  border-color: var(--clr-skip);
-}
-
-.option-btn.skip-btn.selected {
-  background: rgba(107, 109, 120, 0.08);
-  border-color: var(--clr-skip);
-  color: var(--clr-skip);
-  box-shadow: none;
+  letter-spacing: 0.005em;
 }
 
 /* Radio circle indicator */
@@ -513,14 +501,6 @@ body::after {
   0% { transform: scale(0); }
   60% { transform: scale(1.2); }
   100% { transform: scale(1); }
-}
-
-.option-btn.skip-btn.selected .option-radio {
-  border-color: var(--clr-skip);
-}
-
-.option-btn.skip-btn.selected .option-radio::after {
-  background: var(--clr-skip);
 }
 
 /* --- Freeform input -------------------------------------------------- */
