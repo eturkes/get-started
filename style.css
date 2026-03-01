@@ -923,7 +923,7 @@ body::after {
   border-radius: 6px;
   background: var(--clr-accent-glow);
   color: var(--clr-accent-text);
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 600;
   font-family: var(--font-body);
   flex-shrink: 0;
@@ -954,7 +954,7 @@ body::after {
 
 .guide-code {
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   line-height: 1.7;
   background: var(--clr-surface-alt);
   border: 1px solid var(--clr-border-subtle);
