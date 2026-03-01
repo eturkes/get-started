@@ -64,11 +64,9 @@ Unanswered questions are left blank and excluded from the final prompt. Each que
 
 ### Download Options
 
-Two buttons in the download bar:
+Three buttons in the download bar:
 
-1. **Download Prompt** — Downloads `CLAUDE.md` directly (plain text, `text/markdown`).
-
-2. **Download Install Script** — Downloads `install-claude-prompt.zip` containing a platform-specific installer script. The platform is auto-detected from the browser and can be overridden with the selector in the download bar:
+1. **Download Install Script** (default) — Downloads `install-claude-prompt.zip` containing a platform-specific installer script. The platform is auto-detected from the browser and can be overridden with the selector in the download bar:
    - **macOS**: `.command` file — double-clickable (opens in Terminal). Bash script with heredoc.
    - **Linux**: `.sh` file — bash script, identical logic to macOS.
    - **Windows**: `.ps1` PowerShell script — uses a here-string to write the prompt file to `%USERPROFILE%\.claude\CLAUDE.md`.
@@ -78,6 +76,10 @@ The ZIP is generated in-browser with Unix 755 permissions baked into the central
 The ZIP generation (`generateZip()`) is a minimal spec-compliant implementation: single STORE entry, CRC-32, no compression, no dependencies. It writes the local file header, file data, central directory header, and end-of-central-directory record as raw bytes.
 
 Each install script clears the terminal, shows a banner, creates the config directory if needed, writes the prompt, and pauses with "Press Enter to close" so the user can read the result.
+
+2. **Download Prompt** — Downloads `CLAUDE.md` directly (plain text, `text/markdown`).
+
+3. **Manual Install Guide** — Opens a modal overlay with step-by-step visual instructions for manual installation. The guide is platform-specific (macOS, Linux, or Windows) and includes copy-to-clipboard buttons for each command and for the full prompt content. This provides a guided alternative for users who prefer not to download and run scripts. The guide adapts when the OS selector is changed while the modal is open.
 
 ### Gemini Integration (Optional)
 
@@ -130,7 +132,6 @@ The questionnaire covers 15 questions tailored for clinical and healthcare profe
 
 These informed architectural decisions but are not built:
 
-- GUI installer option
 - Automatic installation of AI tools
 - User accounts and prompt saving
 - Cross-device sync

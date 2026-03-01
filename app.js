@@ -464,6 +464,10 @@ const placeholderEl = document.getElementById("placeholder");
 const progressEl = document.getElementById("progress");
 const btnDownloadPrompt = document.getElementById("btn-download-prompt");
 const btnDownloadScript = document.getElementById("btn-download-script");
+const btnInstallGuide = document.getElementById("btn-install-guide");
+const guideOverlay = document.getElementById("guide-overlay");
+const guideBody = document.getElementById("guide-body");
+const guideClose = document.getElementById("guide-close");
 const toolLabelEl = document.getElementById("tool-label");
 const osSelectorEl = document.getElementById("os-selector");
 
@@ -792,6 +796,7 @@ function updateDownloadButton() {
   const hasContent = QUESTIONS.some((q) => hasEffectiveContent(q.id));
   btnDownloadPrompt.disabled = !hasContent;
   btnDownloadScript.disabled = !hasContent;
+  btnInstallGuide.disabled = !hasContent;
 }
 
 // -----------------------------------------------------------------------
@@ -1053,6 +1058,148 @@ window
 applyTheme(getEffectiveTheme());
 
 // -----------------------------------------------------------------------
+// Install Guide Modal
+// -----------------------------------------------------------------------
+
+/**
+ * Build a step element with a number badge and content.
+ */
+function guideStep(num, html) {
+  return (
+    '<div class="guide-step">' +
+    '<span class="guide-step-num">' + num + '</span>' +
+    '<div class="guide-step-content">' + html + '</div>' +
+    '</div>'
+  );
+}
+
+/**
+ * Build a code block with a copy-to-clipboard button.
+ */
+function guideCodeBlock(text, label) {
+  const id = "guide-cb-" + Math.random().toString(36).slice(2, 8);
+  return (
+    '<div class="guide-code-wrap">' +
+    '<pre class="guide-code" id="' + id + '">' + escapeHtml(text) + '</pre>' +
+    '<button class="guide-copy-btn" type="button" data-copy-target="' + id + '">' +
+    (label || "Copy") +
+    '</button>' +
+    '</div>'
+  );
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/**
+ * Render platform-specific install guide steps into the modal body.
+ */
+function renderGuideContent(os) {
+  const prompt = buildPromptString();
+  if (!prompt) return;
+
+  const configFile = activeTool.configFile;
+  const isWin = os === "windows";
+
+  const terminalName = os === "macos"
+    ? "Terminal (Applications > Utilities > Terminal)"
+    : isWin
+      ? "PowerShell (right-click Start > Terminal)"
+      : "your terminal emulator";
+
+  const mkdirCmd = isWin
+    ? 'New-Item -ItemType Directory -Path "$env:USERPROFILE\\.claude" -Force'
+    : "mkdir -p ~/.claude";
+
+  const verifyCmd = isWin
+    ? 'Get-Content "$env:USERPROFILE\\.claude\\' + configFile + '"'
+    : "cat ~/.claude/" + configFile;
+
+  const steps = [];
+
+  // Step 1: Open terminal
+  steps.push(guideStep(1,
+    "<p>Open " + terminalName + ".</p>"
+  ));
+
+  // Step 2: Create config directory
+  steps.push(guideStep(2,
+    "<p>Create the config directory if it doesn't exist:</p>" +
+    guideCodeBlock(mkdirCmd)
+  ));
+
+  // Step 3: Copy prompt
+  steps.push(guideStep(3,
+    "<p>Copy your system prompt to the clipboard:</p>" +
+    guideCodeBlock(prompt)
+  ));
+
+  // Step 4: Create config file
+  if (isWin) {
+    steps.push(guideStep(4,
+      "<p>Create the file and paste your prompt:</p>" +
+      guideCodeBlock('notepad "$env:USERPROFILE\\.claude\\' + configFile + '"') +
+      "<p>Paste the prompt content, then save and close Notepad.</p>"
+    ));
+  } else {
+    steps.push(guideStep(4,
+      "<p>Open the config file in a text editor and paste your prompt:</p>" +
+      guideCodeBlock("nano ~/.claude/" + configFile) +
+      "<p>Paste, then save (<kbd>Ctrl+O</kbd>, <kbd>Enter</kbd>, <kbd>Ctrl+X</kbd>).</p>"
+    ));
+  }
+
+  // Step 5: Verify
+  steps.push(guideStep(5,
+    "<p>Verify the file was created:</p>" +
+    guideCodeBlock(verifyCmd) +
+    "<p>You should see your prompt printed to the terminal. You're all set!</p>"
+  ));
+
+  guideBody.innerHTML = steps.join("");
+
+  // Wire up copy buttons
+  guideBody.querySelectorAll(".guide-copy-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const target = document.getElementById(btn.dataset.copyTarget);
+      if (!target) return;
+      navigator.clipboard.writeText(target.textContent).then(() => {
+        btn.classList.add("copied");
+        const prev = btn.textContent;
+        btn.textContent = "Copied!";
+        setTimeout(() => {
+          btn.classList.remove("copied");
+          btn.textContent = prev;
+        }, 1500);
+      });
+    });
+  });
+}
+
+function openGuide() {
+  renderGuideContent(selectedOS);
+  guideOverlay.classList.remove("hidden");
+}
+
+function closeGuide() {
+  guideOverlay.classList.add("hidden");
+}
+
+btnInstallGuide.addEventListener("click", openGuide);
+guideClose.addEventListener("click", closeGuide);
+
+guideOverlay.addEventListener("click", (e) => {
+  if (e.target === guideOverlay) closeGuide();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !guideOverlay.classList.contains("hidden")) {
+    closeGuide();
+  }
+});
+
+// -----------------------------------------------------------------------
 // OS Selector
 // -----------------------------------------------------------------------
 
@@ -1065,6 +1212,9 @@ function initOSSelector() {
       buttons.forEach((b) =>
         b.classList.toggle("selected", b.dataset.os === selectedOS)
       );
+      if (!guideOverlay.classList.contains("hidden")) {
+        renderGuideContent(selectedOS);
+      }
     });
   });
 }
