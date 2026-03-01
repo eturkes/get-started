@@ -19,8 +19,36 @@ const AI_TOOLS = {
       if (os === "macos") return "install-claude-prompt.command";
       return "install-claude-prompt.sh";
     },
-    generateScript(promptContent, os) {
+    generateScript(promptContent, os, includeInstall) {
       if (os === "windows") {
+        const installBlock = includeInstall ? [
+          "# --- Check for Claude Code ---",
+          'Write-Host "Checking for Claude Code..."',
+          "if (Get-Command claude -ErrorAction SilentlyContinue) {",
+          '    Write-Host "  Claude Code is already installed."',
+          "} else {",
+          '    Write-Host "  Claude Code not found."',
+          "    if (Get-Command npm -ErrorAction SilentlyContinue) {",
+          '        Write-Host "  Installing via npm..."',
+          "        npm install -g @anthropic-ai/claude-code",
+          "        if (Get-Command claude -ErrorAction SilentlyContinue) {",
+          '            Write-Host "  Claude Code installed successfully!"',
+          "        } else {",
+          '            Write-Host "  Installation may have failed. Try manually:"',
+          '            Write-Host "    npm install -g @anthropic-ai/claude-code"',
+          "        }",
+          "    } else {",
+          '        Write-Host ""',
+          '        Write-Host "  Node.js is required to install Claude Code."',
+          '        Write-Host "  Install Node.js from https://nodejs.org/ then run:"',
+          '        Write-Host "    npm install -g @anthropic-ai/claude-code"',
+          '        Write-Host ""',
+          '        Write-Host "  Continuing with prompt setup..."',
+          "    }",
+          "}",
+          'Write-Host ""',
+          "",
+        ] : [];
         return [
           "# -----------------------------------------------------------------",
           "# Get Started — Claude Code system prompt installer",
@@ -33,6 +61,7 @@ const AI_TOOLS = {
           'Write-Host "========================================="',
           'Write-Host ""',
           "",
+          ...installBlock,
           '$ConfigDir = Join-Path $env:USERPROFILE ".claude"',
           '$ConfigFile = Join-Path $ConfigDir "CLAUDE.md"',
           "",
@@ -57,6 +86,33 @@ const AI_TOOLS = {
         ].join("\n");
       }
       // Bash script for macOS and Linux
+      const installBlock = includeInstall ? [
+        "# --- Check for Claude Code ---",
+        'echo "Checking for Claude Code..."',
+        "if command -v claude &> /dev/null; then",
+        '  echo "  Claude Code is already installed."',
+        "else",
+        '  echo "  Claude Code not found."',
+        "  if command -v npm &> /dev/null; then",
+        '    echo "  Installing via npm..."',
+        "    if npm install -g @anthropic-ai/claude-code; then",
+        '      echo "  Claude Code installed successfully!"',
+        "    else",
+        '      echo "  Installation failed. Try manually:"',
+        '      echo "    npm install -g @anthropic-ai/claude-code"',
+        "    fi",
+        "  else",
+        '    echo ""',
+        '    echo "  Node.js is required to install Claude Code."',
+        '    echo "  Install Node.js from https://nodejs.org/ then run:"',
+        '    echo "    npm install -g @anthropic-ai/claude-code"',
+        '    echo ""',
+        '    echo "  Continuing with prompt setup..."',
+        "  fi",
+        "fi",
+        'echo ""',
+        "",
+      ] : [];
       return [
         "#!/usr/bin/env bash",
         "# -----------------------------------------------------------------",
@@ -71,6 +127,7 @@ const AI_TOOLS = {
         'echo "========================================="',
         'echo ""',
         "",
+        ...installBlock,
         'CONFIG_DIR="${HOME}/.claude"',
         'CONFIG_FILE="${CONFIG_DIR}/CLAUDE.md"',
         "",
@@ -470,6 +527,7 @@ const guideBody = document.getElementById("guide-body");
 const guideClose = document.getElementById("guide-close");
 const toolLabelEl = document.getElementById("tool-label");
 const osSelectorEl = document.getElementById("os-selector");
+const includeInstallEl = document.getElementById("include-install");
 
 // -----------------------------------------------------------------------
 // Render
@@ -977,8 +1035,9 @@ btnDownloadPrompt.addEventListener("click", () => {
 btnDownloadScript.addEventListener("click", () => {
   const prompt = buildPromptString();
   if (!prompt) return;
+  const includeInstall = includeInstallEl.checked;
   const filename = activeTool.getScriptFilename(selectedOS);
-  const script = activeTool.generateScript(prompt, selectedOS);
+  const script = activeTool.generateScript(prompt, selectedOS, includeInstall);
   const zip = generateZip(filename, script);
   downloadBlob(
     new Blob([zip], { type: "application/zip" }),
@@ -1116,42 +1175,53 @@ function renderGuideContent(os) {
     ? 'Get-Content "$env:USERPROFILE\\.claude\\' + configFile + '"'
     : "cat ~/.claude/" + configFile;
 
+  const installCmd = "npm install -g @anthropic-ai/claude-code";
+
   const steps = [];
+  let step = 1;
 
   // Step 1: Open terminal
-  steps.push(guideStep(1,
+  steps.push(guideStep(step++,
     "<p>Open " + terminalName + ".</p>"
   ));
 
-  // Step 2: Create config directory
-  steps.push(guideStep(2,
+  // Step 2: Install Claude Code (if not already present)
+  steps.push(guideStep(step++,
+    "<p>Install Claude Code if you haven't already " +
+    "(requires <a href=\"https://nodejs.org/\" target=\"_blank\" rel=\"noopener\">Node.js</a>):</p>" +
+    guideCodeBlock(installCmd) +
+    "<p>Skip this step if Claude Code is already installed.</p>"
+  ));
+
+  // Step 3: Create config directory
+  steps.push(guideStep(step++,
     "<p>Create the config directory if it doesn't exist:</p>" +
     guideCodeBlock(mkdirCmd)
   ));
 
-  // Step 3: Copy prompt
-  steps.push(guideStep(3,
+  // Step 4: Copy prompt
+  steps.push(guideStep(step++,
     "<p>Copy your system prompt to the clipboard:</p>" +
     guideCodeBlock(prompt)
   ));
 
-  // Step 4: Create config file
+  // Step 5: Create config file
   if (isWin) {
-    steps.push(guideStep(4,
+    steps.push(guideStep(step++,
       "<p>Create the file and paste your prompt:</p>" +
       guideCodeBlock('notepad "$env:USERPROFILE\\.claude\\' + configFile + '"') +
       "<p>Paste the prompt content, then save and close Notepad.</p>"
     ));
   } else {
-    steps.push(guideStep(4,
+    steps.push(guideStep(step++,
       "<p>Open the config file in a text editor and paste your prompt:</p>" +
       guideCodeBlock("nano ~/.claude/" + configFile) +
       "<p>Paste, then save (<kbd>Ctrl+O</kbd>, <kbd>Enter</kbd>, <kbd>Ctrl+X</kbd>).</p>"
     ));
   }
 
-  // Step 5: Verify
-  steps.push(guideStep(5,
+  // Step 6: Verify
+  steps.push(guideStep(step++,
     "<p>Verify the file was created:</p>" +
     guideCodeBlock(verifyCmd) +
     "<p>You should see your prompt printed to the terminal. You're all set!</p>"

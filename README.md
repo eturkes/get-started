@@ -71,15 +71,17 @@ Three buttons in the download bar:
    - **Linux**: `.sh` file — bash script, identical logic to macOS.
    - **Windows**: `.ps1` PowerShell script — uses a here-string to write the prompt file to `%USERPROFILE%\.claude\CLAUDE.md`.
 
+   An **"Install Claude Code if not present"** checkbox (enabled by default) adds auto-installation logic to the script. When checked, the script checks if `claude` is available, and if not, attempts `npm install -g @anthropic-ai/claude-code`. If Node.js/npm is not found, the script prints instructions and continues with prompt setup. Uncheck to generate a prompt-only script for users who already have Claude Code installed.
+
 The ZIP is generated in-browser with Unix 755 permissions baked into the central directory's external attributes (`0x81ED0000`), so the executable bit survives the download on macOS and Linux.
 
 The ZIP generation (`generateZip()`) is a minimal spec-compliant implementation: single STORE entry, CRC-32, no compression, no dependencies. It writes the local file header, file data, central directory header, and end-of-central-directory record as raw bytes.
 
-Each install script clears the terminal, shows a banner, creates the config directory if needed, writes the prompt, and pauses with "Press Enter to close" so the user can read the result.
+Each install script clears the terminal, shows a banner, optionally checks for and installs Claude Code, creates the config directory if needed, writes the prompt, and pauses with "Press Enter to close" so the user can read the result.
 
 2. **Download Prompt** — Downloads `CLAUDE.md` directly (plain text, `text/markdown`).
 
-3. **Manual Install Guide** — Opens a modal overlay with step-by-step visual instructions for manual installation. The guide is platform-specific (macOS, Linux, or Windows) and includes copy-to-clipboard buttons for each command and for the full prompt content. This provides a guided alternative for users who prefer not to download and run scripts. The guide adapts when the OS selector is changed while the modal is open.
+3. **Manual Install Guide** — Opens a modal overlay with step-by-step visual instructions for manual installation. The guide is platform-specific (macOS, Linux, or Windows) and includes copy-to-clipboard buttons for each command and for the full prompt content. It includes a step for installing Claude Code via npm (with a link to Node.js). This provides a guided alternative for users who prefer not to download and run scripts. The guide adapts when the OS selector is changed while the modal is open.
 
 ### Gemini Integration (Optional)
 
@@ -132,7 +134,6 @@ The questionnaire covers 15 questions tailored for clinical and healthcare profe
 
 These informed architectural decisions but are not built:
 
-- Automatic installation of AI tools
 - User accounts and prompt saving
 - Cross-device sync
 - AI-powered prompt improvement based on user habits (paid feature)
