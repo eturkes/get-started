@@ -434,6 +434,13 @@ const QUESTIONS = [
       },
     ],
   },
+  {
+    id: 15,
+    type: "freeform",
+    question: "Anything else you'd like your AI assistant to know?",
+    placeholder:
+      "Describe any additional preferences, workflows, tools you use, or specific instructions...",
+  },
 ];
 
 // -----------------------------------------------------------------------
@@ -494,15 +501,19 @@ function renderQuestions() {
     textEl.textContent = q.question;
     card.appendChild(textEl);
 
-    const listEl = document.createElement("div");
-    listEl.className = "options-list";
+    if (q.type === "freeform") {
+      renderFreeformInputs(card, q);
+    } else {
+      const listEl = document.createElement("div");
+      listEl.className = "options-list";
 
-    q.options.forEach((opt, idx) => {
-      listEl.appendChild(createOptionButton(q.id, idx, opt.label, false));
-    });
-    listEl.appendChild(createOptionButton(q.id, -1, "Skip this question", true));
+      q.options.forEach((opt, idx) => {
+        listEl.appendChild(createOptionButton(q.id, idx, opt.label, false));
+      });
+      listEl.appendChild(createOptionButton(q.id, -1, "Skip this question", true));
 
-    card.appendChild(listEl);
+      card.appendChild(listEl);
+    }
     qCell.appendChild(card);
     contentScroll.appendChild(qCell);
 
@@ -545,6 +556,117 @@ function createOptionButton(questionId, optionIndex, label, isSkip) {
   return btn;
 }
 
+/**
+ * Render a freeform text input with optional AI conversion button.
+ */
+function renderFreeformInputs(card, q) {
+  const textarea = document.createElement("textarea");
+  textarea.className = "freeform-textarea";
+  textarea.placeholder = q.placeholder || "";
+  textarea.rows = 4;
+
+  const convertBtn = document.createElement("button");
+  convertBtn.className = "convert-btn";
+  convertBtn.type = "button";
+  convertBtn.disabled = true;
+  convertBtn.textContent = "Convert to Prompt";
+
+  textarea.addEventListener("input", () => {
+    const text = textarea.value.trim();
+    convertBtn.disabled = !text;
+  });
+
+  convertBtn.addEventListener("click", async () => {
+    const text = textarea.value.trim();
+    if (!text) return;
+
+    if (
+      typeof GEMINI_API_KEY === "undefined" ||
+      !GEMINI_API_KEY ||
+      GEMINI_API_KEY === "your-gemini-api-key-here"
+    ) {
+      alert(
+        "Gemini API key not configured.\n\n" +
+          "1. Copy env.js.example to env.js\n" +
+          "2. Replace the placeholder with your Gemini API key\n" +
+          "3. Reload the page"
+      );
+      return;
+    }
+
+    convertBtn.textContent = "Converting\u2026";
+    convertBtn.disabled = true;
+
+    selections.set(q.id, text);
+    customEdits.delete(q.id);
+
+    try {
+      const converted = await convertToPrompt(text);
+      if (converted) {
+        customEdits.set(q.id, converted);
+      }
+    } catch (err) {
+      alert("Conversion failed: " + err.message);
+    } finally {
+      updateCardStyles(q.id);
+      updatePromptBlock(q.id);
+      updatePlaceholder();
+      updateProgress();
+      updateDownloadButton();
+      convertBtn.textContent = "Convert to Prompt";
+      convertBtn.disabled = !textarea.value.trim();
+    }
+  });
+
+  card.appendChild(textarea);
+  card.appendChild(convertBtn);
+}
+
+// -----------------------------------------------------------------------
+// Gemini API — Convert Freeform Text to Prompt
+// -----------------------------------------------------------------------
+
+/**
+ * Call the Gemini API to convert freeform text into a system prompt paragraph.
+ */
+async function convertToPrompt(text) {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text:
+                  "Convert the following user description into a well-crafted system prompt instruction " +
+                  "for an AI coding assistant. Write it as a clear, actionable paragraph that addresses " +
+                  "the AI directly (e.g., 'Always do X', 'When the user asks Y, do Z'). Follow best " +
+                  "practices for system prompts: be specific, avoid ambiguity, and focus on observable " +
+                  "behaviors. Return ONLY the prompt text with no additional commentary, labels, or " +
+                  "formatting.\n\nUser description:\n" +
+                  text,
+              },
+            ],
+          },
+        ],
+      }),
+    }
+  );
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`API request failed (${res.status}): ${err}`);
+  }
+
+  const data = await res.json();
+  const candidate = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!candidate) throw new Error("No response from API");
+  return candidate.trim();
+}
+
 // -----------------------------------------------------------------------
 // Selection Handling
 // -----------------------------------------------------------------------
@@ -579,8 +701,14 @@ function updateCardStyles(questionId) {
   if (!card) return;
 
   const currentSelection = selections.get(questionId);
-  const buttons = card.querySelectorAll(".option-btn");
   const q = QUESTIONS.find((q) => q.id === questionId);
+
+  if (q.type === "freeform") {
+    card.classList.toggle("answered", currentSelection !== undefined);
+    return;
+  }
+
+  const buttons = card.querySelectorAll(".option-btn");
 
   buttons.forEach((btn, idx) => {
     const btnOptionIndex = idx < q.options.length ? idx : -1;
@@ -612,7 +740,13 @@ function updatePromptBlock(questionId) {
     pText.contentEditable = "false";
     pCell.classList.remove("active");
   } else {
-    pText.textContent = q.options[sel].promptText;
+    if (q.type === "freeform") {
+      pText.textContent = customEdits.has(questionId)
+        ? customEdits.get(questionId)
+        : sel;
+    } else {
+      pText.textContent = q.options[sel].promptText;
+    }
     pText.contentEditable = "plaintext-only";
     pCell.classList.add("active");
   }
@@ -816,11 +950,14 @@ function buildPromptString() {
     const sel = selections.get(q.id);
     if (sel === undefined || sel === -1) return;
 
-    // Use the user's custom edit if they modified this block,
-    // otherwise fall back to the selected option's default text.
-    const text = customEdits.has(q.id)
-      ? customEdits.get(q.id)
-      : q.options[sel].promptText;
+    let text;
+    if (customEdits.has(q.id)) {
+      text = customEdits.get(q.id);
+    } else if (q.type === "freeform") {
+      text = sel;
+    } else {
+      text = q.options[sel].promptText;
+    }
 
     if (text) {
       blocks.push(text);

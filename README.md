@@ -7,9 +7,11 @@ No build step, no package dependencies. Open `index.html` in a browser. Fonts lo
 ## File Structure
 
 ```
-index.html   — Page shell: header, theme toggle, 2-col grid headers, scrollable content area, download bar
-style.css    — All styling: light/dark themes, CSS Grid layout, responsive breakpoints
-app.js       — All logic: data, state, rendering, theme toggle, ZIP generation, downloads
+index.html       — Page shell: header, theme toggle, 2-col grid headers, scrollable content area, download bar
+style.css        — All styling: light/dark themes, CSS Grid layout, responsive breakpoints
+app.js           — All logic: data, state, rendering, theme toggle, ZIP generation, downloads
+env.js.example   — Template for Gemini API key (copy to env.js)
+.gitignore       — Excludes env.js from version control
 ```
 
 Everything is vanilla HTML/CSS/JS. The entire app lives in these three files.
@@ -28,7 +30,7 @@ On screens narrower than 820px, the grid collapses to a single column (question 
 
 ### Data Model
 
-All 14 questions live in the `QUESTIONS` array in `app.js` (line ~72). Each entry:
+All 15 questions live in the `QUESTIONS` array in `app.js`. Each entry:
 
 ```js
 {
@@ -43,6 +45,8 @@ All 14 questions live in the `QUESTIONS` array in `app.js` (line ~72). Each entr
   ],
 }
 ```
+
+Most questions use multiple-choice options. Question 15 is a `"freeform"` type with a textarea instead of options, and an optional "Convert to Prompt" button that uses the Gemini API to refine the text into a system prompt paragraph.
 
 Application state is a single `Map<questionId, optionIndex>`:
 - `undefined` = unanswered (no entry in map)
@@ -74,6 +78,17 @@ The ZIP generation (`generateZip()`) is a minimal spec-compliant implementation:
 
 Each install script clears the terminal, shows a banner, creates the config directory if needed, writes the prompt, and pauses with "Press Enter to close" so the user can read the result.
 
+### Gemini Integration (Optional)
+
+The freeform question (question 15) includes a "Convert to Prompt" button that calls the Gemini API (`gemini-3-flash-preview`) to refine the user's natural-language description into a polished system prompt paragraph. Text typed in the freeform textarea does not appear in the right-column preview or the final prompt until the user clicks "Convert to Prompt". A valid API key is required for this question to contribute to the output.
+
+Setup:
+1. Copy `env.js.example` to `env.js`
+2. Replace the placeholder with your Gemini API key
+3. `env.js` is gitignored and will not be committed
+
+The API call is made client-side from the browser. The key is not exposed in version control but is visible in browser network requests.
+
 ### Extensibility (AI Tool Config)
 
 The `AI_TOOLS` object at the top of `app.js` (line ~12) is the extension point for supporting other AI tools. Each entry defines:
@@ -92,7 +107,7 @@ The `os` parameter is one of `"macos"`, `"linux"`, or `"windows"`. The active to
 
 ### Question Topics
 
-The questionnaire covers 14 questions tailored for clinical and healthcare professionals:
+The questionnaire covers 15 questions tailored for clinical and healthcare professionals:
 
 1. Role (clinician, clinical researcher, bioinformatician, administrator)
 2. Technical comfort level
@@ -108,6 +123,7 @@ The questionnaire covers 14 questions tailored for clinical and healthcare profe
 12. Learning style for new tools
 13. Uncertainty handling (stop and ask, flag but suggest, give best answer)
 14. Conversational tone (professional, warm/encouraging, relaxed)
+15. Freeform customization (free text with optional AI-powered prompt conversion)
 
 ## Planned Features (Not Yet Implemented)
 
