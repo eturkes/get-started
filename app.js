@@ -1290,6 +1290,26 @@ function initOSSelector() {
 }
 
 // -----------------------------------------------------------------------
+// Server info autodetection
+// -----------------------------------------------------------------------
+
+(async function detectServer() {
+  const el = document.getElementById("server-info");
+  if (!el) return;
+  try {
+    const resp = await fetch(window.location.href, { method: "HEAD" });
+    const server = resp.headers.get("Server");
+    if (server) {
+      el.textContent = "Powered by " + server;
+      return;
+    }
+  } catch (e) {
+    // fetch unavailable (file:// protocol, network error, etc.)
+  }
+  el.textContent = "Powered by OpenBSD / httpd";
+})();
+
+// -----------------------------------------------------------------------
 // Initialize
 // -----------------------------------------------------------------------
 renderQuestions();

@@ -138,6 +138,10 @@ These informed architectural decisions but are not built:
 - Cross-device sync
 - AI-powered prompt improvement based on user habits (paid feature)
 
+### Server Info
+
+The header displays a small italic line showing the OS and web server powering the site. On page load, `app.js` sends a `HEAD` request to the current URL and reads the `Server` HTTP response header. If the header is present (e.g., `OpenBSD httpd`), it is displayed as-is. If detection fails (local `file://` access, missing header, network error), it falls back to "Powered by OpenBSD / httpd" — the known production environment.
+
 ## Theme
 
 The app supports light and dark modes. On first visit it matches the operating system preference via `prefers-color-scheme`. A toggle button in the header overrides this; the choice is persisted in `localStorage`. If the user has not explicitly toggled, the app continues to follow system changes.
