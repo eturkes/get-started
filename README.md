@@ -63,11 +63,16 @@ Two buttons in the download bar:
 
 1. **Download Prompt** — Downloads `CLAUDE.md` directly (plain text, `text/markdown`).
 
-2. **Download Install Script** — Downloads `install-claude-prompt.zip` containing `install-claude-prompt.command`. The `.command` extension makes it double-clickable on macOS (opens in Terminal). The ZIP is generated in-browser with Unix 755 permissions baked into the central directory's external attributes (`0x81ED0000`), so the executable bit survives the download.
+2. **Download Install Script** — Downloads `install-claude-prompt.zip` containing a platform-specific installer script. The platform is auto-detected from the browser and can be overridden with the selector in the download bar:
+   - **macOS**: `.command` file — double-clickable (opens in Terminal). Bash script with heredoc.
+   - **Linux**: `.sh` file — bash script, identical logic to macOS.
+   - **Windows**: `.ps1` PowerShell script — uses a here-string to write the prompt file to `%USERPROFILE%\.claude\CLAUDE.md`.
 
-The ZIP generation (`generateZip()` at line ~519) is a minimal spec-compliant implementation: single STORE entry, CRC-32, no compression, no dependencies. It writes the local file header, file data, central directory header, and end-of-central-directory record as raw bytes.
+The ZIP is generated in-browser with Unix 755 permissions baked into the central directory's external attributes (`0x81ED0000`), so the executable bit survives the download on macOS and Linux.
 
-The install script clears the terminal, shows a banner, creates `~/.claude/` if needed, writes the prompt via heredoc, and pauses with "Press Enter to close" so the user can read the result.
+The ZIP generation (`generateZip()`) is a minimal spec-compliant implementation: single STORE entry, CRC-32, no compression, no dependencies. It writes the local file header, file data, central directory header, and end-of-central-directory record as raw bytes.
+
+Each install script clears the terminal, shows a banner, creates the config directory if needed, writes the prompt, and pauses with "Press Enter to close" so the user can read the result.
 
 ### Extensibility (AI Tool Config)
 
@@ -76,15 +81,14 @@ The `AI_TOOLS` object at the top of `app.js` (line ~12) is the extension point f
 ```js
 {
   id: "claudeCode",
-  name: "Claude Code",                          // Shown in the UI badge
-  configDir: "~/.claude",                       // Used in the install script
-  configFile: "CLAUDE.md",                      // Target filename
-  scriptFilename: "install-claude-prompt.command", // Filename inside the ZIP
-  generateScript(promptContent) { ... },         // Returns the full bash script string
+  name: "Claude Code",                              // Shown in the UI badge
+  configFile: "CLAUDE.md",                           // Target filename
+  getScriptFilename(os) { ... },                     // Returns OS-specific filename
+  generateScript(promptContent, os) { ... },         // Returns the full script string
 }
 ```
 
-The active tool is set by `const activeTool = AI_TOOLS.claudeCode`. To add another tool, add an entry to `AI_TOOLS` and point `activeTool` at it (or build a UI selector).
+The `os` parameter is one of `"macos"`, `"linux"`, or `"windows"`. The active tool is set by `const activeTool = AI_TOOLS.claudeCode`. To add another tool, add an entry to `AI_TOOLS` and point `activeTool` at it (or build a UI selector).
 
 ### Question Topics
 
@@ -107,13 +111,11 @@ The questionnaire covers 12 questions tailored for clinical and healthcare profe
 
 These informed architectural decisions but are not built:
 
-- OS auto-detection in the installer
 - GUI installer option
 - Automatic installation of AI tools
 - User accounts and prompt saving
 - Cross-device sync
 - AI-powered prompt improvement based on user habits (paid feature)
-- Windows support
 
 ## Theme
 
@@ -128,4 +130,4 @@ The app supports light and dark modes. On first visit it matches the operating s
 - **No framework** — Vanilla JS keeps the project zero-dependency and instantly runnable. The app is small enough that a framework would add complexity without benefit.
 - **Single scroll, not split scroll** — Both panels scroll together so prompt blocks align with their questions. An earlier version had independent scroll panels but the alignment requirement made synchronized scrolling the right choice.
 - **ZIP for executable delivery** — Browsers cannot set file permissions on downloads. Wrapping the `.command` file in a ZIP with Unix permissions in the metadata is the only way to deliver an executable file from a static web page.
-- **Heredoc with single-quoted delimiter** — The install script uses `<< 'GETSTARTED_EOF'` (quoted), which disables shell variable expansion inside the heredoc. This means prompt content is written literally without needing to escape `$` or backticks.
+- **Heredoc with single-quoted delimiter** — The bash install script uses `<< 'GETSTARTED_EOF'` (quoted), which disables shell variable expansion inside the heredoc. The Windows PowerShell script uses `@'...'@` (single-quoted here-string) for the same reason. Both write prompt content literally without needing to escape special characters.

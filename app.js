@@ -13,10 +13,50 @@ const AI_TOOLS = {
   claudeCode: {
     id: "claudeCode",
     name: "Claude Code",
-    configDir: "~/.claude",
     configFile: "CLAUDE.md",
-    scriptFilename: "install-claude-prompt.command",
-    generateScript(promptContent) {
+    getScriptFilename(os) {
+      if (os === "windows") return "install-claude-prompt.ps1";
+      if (os === "macos") return "install-claude-prompt.command";
+      return "install-claude-prompt.sh";
+    },
+    generateScript(promptContent, os) {
+      if (os === "windows") {
+        return [
+          "# -----------------------------------------------------------------",
+          "# Get Started — Claude Code system prompt installer",
+          "# Generated at: " + new Date().toISOString(),
+          "# -----------------------------------------------------------------",
+          "",
+          "Clear-Host",
+          'Write-Host "========================================="',
+          'Write-Host "  Claude Code — System Prompt Installer"',
+          'Write-Host "========================================="',
+          'Write-Host ""',
+          "",
+          '$ConfigDir = Join-Path $env:USERPROFILE ".claude"',
+          '$ConfigFile = Join-Path $ConfigDir "CLAUDE.md"',
+          "",
+          "# Create config directory if it doesn't exist",
+          "if (-not (Test-Path $ConfigDir)) {",
+          "    New-Item -ItemType Directory -Path $ConfigDir | Out-Null",
+          '    Write-Host "Created directory: $ConfigDir"',
+          "}",
+          "",
+          "# Write the system prompt",
+          "$PromptContent = @'",
+          promptContent,
+          "'@",
+          "[IO.File]::WriteAllText($ConfigFile, $PromptContent)",
+          "",
+          'Write-Host "System prompt written to $ConfigFile"',
+          'Write-Host ""',
+          'Write-Host "Done! Start Claude Code to use your custom prompt."',
+          'Write-Host ""',
+          'Read-Host "Press Enter to close this window"',
+          "",
+        ].join("\n");
+      }
+      // Bash script for macOS and Linux
       return [
         "#!/usr/bin/env bash",
         "# -----------------------------------------------------------------",
@@ -61,6 +101,21 @@ const AI_TOOLS = {
 
 // Active tool — change this to switch targets
 const activeTool = AI_TOOLS.claudeCode;
+
+// -----------------------------------------------------------------------
+// OS Detection
+// -----------------------------------------------------------------------
+
+function detectOS() {
+  const platform = (
+    navigator.userAgentData?.platform || navigator.platform || ""
+  ).toLowerCase();
+  if (platform.includes("win")) return "windows";
+  if (platform.includes("mac")) return "macos";
+  return "linux";
+}
+
+let selectedOS = detectOS();
 
 // -----------------------------------------------------------------------
 // Questionnaire Data
@@ -361,6 +416,7 @@ const progressEl = document.getElementById("progress");
 const btnDownloadPrompt = document.getElementById("btn-download-prompt");
 const btnDownloadScript = document.getElementById("btn-download-script");
 const toolLabelEl = document.getElementById("tool-label");
+const osSelectorEl = document.getElementById("os-selector");
 
 // -----------------------------------------------------------------------
 // Render
@@ -697,8 +753,9 @@ btnDownloadPrompt.addEventListener("click", () => {
 btnDownloadScript.addEventListener("click", () => {
   const prompt = buildPromptString();
   if (!prompt) return;
-  const script = activeTool.generateScript(prompt);
-  const zip = generateZip(activeTool.scriptFilename, script);
+  const filename = activeTool.getScriptFilename(selectedOS);
+  const script = activeTool.generateScript(prompt, selectedOS);
+  const zip = generateZip(filename, script);
   downloadBlob(
     new Blob([zip], { type: "application/zip" }),
     "install-claude-prompt.zip"
@@ -774,7 +831,25 @@ window
 applyTheme(getEffectiveTheme());
 
 // -----------------------------------------------------------------------
+// OS Selector
+// -----------------------------------------------------------------------
+
+function initOSSelector() {
+  const buttons = osSelectorEl.querySelectorAll(".os-btn");
+  buttons.forEach((btn) => {
+    if (btn.dataset.os === selectedOS) btn.classList.add("selected");
+    btn.addEventListener("click", () => {
+      selectedOS = btn.dataset.os;
+      buttons.forEach((b) =>
+        b.classList.toggle("selected", b.dataset.os === selectedOS)
+      );
+    });
+  });
+}
+
+// -----------------------------------------------------------------------
 // Initialize
 // -----------------------------------------------------------------------
 renderQuestions();
+initOSSelector();
 updateProgress();
