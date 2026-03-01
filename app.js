@@ -392,6 +392,48 @@ const QUESTIONS = [
       },
     ],
   },
+  {
+    id: 13,
+    question: "When the AI is not fully certain about something, how should it handle it?",
+    options: [
+      {
+        label: "Stop and tell me — I would rather know than get a wrong answer",
+        promptText:
+          "When uncertain about any fact, recommendation, or approach, say so clearly and do not proceed until the user provides direction. In healthcare contexts, an incorrect assumption can have serious consequences. It is always better to pause and ask than to guess. Label speculative suggestions explicitly, for example: \"I am not certain about this — please verify before acting.\"",
+      },
+      {
+        label: "Flag the doubt, but still offer your best suggestion",
+        promptText:
+          "When uncertain, clearly flag the uncertainty but still offer a best-effort suggestion so the user has something to work with. Use phrases like \"I believe this is correct but recommend verifying\" or \"There are a few possible approaches — here is my recommendation and why.\" This gives the user a starting point without hiding the limits of the AI's knowledge.",
+      },
+      {
+        label: "Give me your best answer — I will verify what I need to on my own",
+        promptText:
+          "Provide the best available answer or solution without excessive hedging. The user prefers to receive direct recommendations and will independently verify claims when needed. Reserve uncertainty disclaimers for situations where the risk of acting on incorrect information is genuinely high.",
+      },
+    ],
+  },
+  {
+    id: 14,
+    question: "What tone should the AI use when working with you?",
+    options: [
+      {
+        label: "Professional and straightforward — like a trusted colleague",
+        promptText:
+          "Use a professional, composed tone throughout all interactions. Communicate like a knowledgeable colleague in a clinical or research setting — clear, respectful, and focused on the work. Avoid casual language, humor, and unnecessary pleasantries. Prioritize precision and reliability in tone.",
+      },
+      {
+        label: "Warm and encouraging — especially when I am learning something new",
+        promptText:
+          "Use a warm, supportive tone. Acknowledge effort and progress, especially when the user is learning new tools or concepts. Offer encouragement when tasks are challenging. Be patient with repeated questions. Frame suggestions constructively — for example, say \"a good next step would be\" rather than \"you should.\"",
+      },
+      {
+        label: "Relaxed and conversational — I prefer a natural, informal style",
+        promptText:
+          "Use a relaxed, conversational tone. Write naturally, as if speaking to a knowledgeable friend. Keep responses approachable and easy to read. Informality is fine as long as the information is accurate and clear.",
+      },
+    ],
+  },
 ];
 
 // -----------------------------------------------------------------------

@@ -28,7 +28,7 @@ On screens narrower than 820px, the grid collapses to a single column (question 
 
 ### Data Model
 
-All 12 questions live in the `QUESTIONS` array in `app.js` (line ~72). Each entry:
+All 14 questions live in the `QUESTIONS` array in `app.js` (line ~72). Each entry:
 
 ```js
 {
@@ -92,7 +92,7 @@ The `os` parameter is one of `"macos"`, `"linux"`, or `"windows"`. The active to
 
 ### Question Topics
 
-The questionnaire covers 12 questions tailored for clinical and healthcare professionals:
+The questionnaire covers 14 questions tailored for clinical and healthcare professionals:
 
 1. Role (clinician, clinical researcher, bioinformatician, administrator)
 2. Technical comfort level
@@ -106,6 +106,8 @@ The questionnaire covers 12 questions tailored for clinical and healthcare profe
 10. Sensitive data and patient information (PHI) practices
 11. Evidence and source citation preferences
 12. Learning style for new tools
+13. Uncertainty handling (stop and ask, flag but suggest, give best answer)
+14. Conversational tone (professional, warm/encouraging, relaxed)
 
 ## Planned Features (Not Yet Implemented)
 
