@@ -58,7 +58,7 @@ Unanswered questions are left blank and excluded from the final prompt. Each que
 
 **Visual preview**: Each question has a dedicated `.prompt-cell` element. When an answer is selected, `updatePromptBlock()` writes that option's `promptText` into the cell. The visual spacing between blocks comes from the grid row layout (matching the question cards).
 
-**Inline editing**: Each prompt block becomes `contenteditable="plaintext-only"` when active. Users can click any prompt block and edit the text directly. Edits are stored in a `customEdits` Map keyed by question ID. Changing the selected option for a question clears its custom edit and resets to the new option's default text. The edited text is what gets downloaded.
+**Inline editing**: Each prompt block becomes `contenteditable="plaintext-only"` when active. Users can click any prompt block and edit the text directly. Edits are stored in a `customEdits` Map keyed by question ID. Changing the selected option for a question clears its custom edit and resets to the new option's default text. The edited text is what gets downloaded. If the user clears all text from a prompt block, that question is treated as unanswered — the answered count decrements, the card loses its answered styling, and the block is excluded from the download.
 
 **Download output**: `buildPromptString()` checks `customEdits` for each question first, falling back to the selected option's `promptText` if no edit exists. Blocks are joined with `\n\n` (single blank line separator). This compact form is what goes into CLAUDE.md.
 

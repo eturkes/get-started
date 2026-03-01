@@ -532,6 +532,10 @@ function renderQuestions() {
     // Capture edits when the user types in a prompt block
     pText.addEventListener("input", () => {
       customEdits.set(q.id, pText.textContent);
+      updateCardStyles(q.id);
+      updatePlaceholder();
+      updateProgress();
+      updateDownloadButton();
     });
 
     pCell.appendChild(pText);
@@ -701,6 +705,19 @@ function handleSelection(questionId, optionIndex) {
 }
 
 /**
+ * Check whether a question has effective content for the prompt.
+ * Returns false if unanswered, skipped, or if the user has cleared
+ * all text from the prompt block via inline editing.
+ */
+function hasEffectiveContent(questionId) {
+  const sel = selections.get(questionId);
+  if (sel === undefined || sel === -1) return false;
+  if (customEdits.has(questionId))
+    return customEdits.get(questionId).trim() !== "";
+  return true;
+}
+
+/**
  * Update visual state of a specific question card's option buttons.
  */
 function updateCardStyles(questionId) {
@@ -713,7 +730,7 @@ function updateCardStyles(questionId) {
   const q = QUESTIONS.find((q) => q.id === questionId);
 
   if (q.type === "freeform") {
-    card.classList.toggle("answered", currentSelection !== undefined);
+    card.classList.toggle("answered", hasEffectiveContent(questionId));
     return;
   }
 
@@ -723,7 +740,7 @@ function updateCardStyles(questionId) {
     btn.classList.toggle("selected", currentSelection === idx);
   });
 
-  card.classList.toggle("answered", currentSelection !== undefined);
+  card.classList.toggle("answered", hasEffectiveContent(questionId));
 }
 
 // -----------------------------------------------------------------------
@@ -764,10 +781,7 @@ function updatePromptBlock(questionId) {
  * Show or hide the right-column placeholder.
  */
 function updatePlaceholder() {
-  const hasContent = QUESTIONS.some((q) => {
-    const sel = selections.get(q.id);
-    return sel !== undefined && sel !== -1;
-  });
+  const hasContent = QUESTIONS.some((q) => hasEffectiveContent(q.id));
   placeholderEl.classList.toggle("hidden", hasContent);
 }
 
@@ -775,10 +789,7 @@ function updatePlaceholder() {
  * Enable or disable the download button.
  */
 function updateDownloadButton() {
-  const hasContent = QUESTIONS.some((q) => {
-    const sel = selections.get(q.id);
-    return sel !== undefined && sel !== -1;
-  });
+  const hasContent = QUESTIONS.some((q) => hasEffectiveContent(q.id));
   btnDownloadPrompt.disabled = !hasContent;
   btnDownloadScript.disabled = !hasContent;
 }
@@ -788,9 +799,7 @@ function updateDownloadButton() {
 // -----------------------------------------------------------------------
 
 function updateProgress() {
-  const answered = [...selections.values()].filter(
-    (v) => v !== undefined && v !== -1
-  ).length;
+  const answered = QUESTIONS.filter((q) => hasEffectiveContent(q.id)).length;
   progressEl.textContent = `${answered} / ${QUESTIONS.length} answered`;
 }
 
