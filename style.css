@@ -339,6 +339,25 @@ body::after {
   transform: translateY(0);
 }
 
+/* Editable prompt block */
+.prompt-block-text[contenteditable="plaintext-only"] {
+  cursor: text;
+  border-radius: 6px;
+  padding: 0.4rem 0.5rem;
+  margin: -0.4rem -0.5rem;
+  transition: opacity 0.35s ease, transform 0.35s ease, background 0.2s, box-shadow 0.2s;
+}
+
+.prompt-block-text[contenteditable="plaintext-only"]:hover {
+  background: var(--clr-accent-glow);
+}
+
+.prompt-block-text[contenteditable="plaintext-only"]:focus {
+  outline: none;
+  background: var(--clr-accent-glow);
+  box-shadow: 0 0 0 1px var(--clr-accent-dim);
+}
+
 /* --- Individual question card ---------------------------------------- */
 .question-card {
   background: var(--clr-surface);

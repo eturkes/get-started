@@ -53,7 +53,9 @@ Application state is a single `Map<questionId, optionIndex>`:
 
 **Visual preview**: Each question has a dedicated `.prompt-cell` element. When an answer is selected, `updatePromptBlock()` writes that option's `promptText` into the cell. The visual spacing between blocks comes from the grid row layout (matching the question cards).
 
-**Download output**: `buildPromptString()` collects prompt text from all non-skipped questions in ID order and joins them with `\n\n` (single blank line separator). This compact form is what goes into CLAUDE.md.
+**Inline editing**: Each prompt block becomes `contenteditable="plaintext-only"` when active. Users can click any prompt block and edit the text directly. Edits are stored in a `customEdits` Map keyed by question ID. Changing the selected option for a question clears its custom edit and resets to the new option's default text. The edited text is what gets downloaded.
+
+**Download output**: `buildPromptString()` checks `customEdits` for each question first, falling back to the selected option's `promptText` if no edit exists. Blocks are joined with `\n\n` (single blank line separator). This compact form is what goes into CLAUDE.md.
 
 ### Download Options
 
@@ -105,7 +107,6 @@ The questionnaire covers 12 questions tailored for clinical and healthcare profe
 
 These informed architectural decisions but are not built:
 
-- Plain text editing of the prompt before download
 - OS auto-detection in the installer
 - GUI installer option
 - Automatic installation of AI tools

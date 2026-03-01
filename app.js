@@ -347,6 +347,11 @@ const QUESTIONS = [
 // A "skip" sets the value to -1.
 const selections = new Map();
 
+// Maps question id -> user-edited prompt text string.
+// Only populated when the user manually edits a prompt block.
+// Cleared when the user changes their selection for that question.
+const customEdits = new Map();
+
 // -----------------------------------------------------------------------
 // DOM References
 // -----------------------------------------------------------------------
@@ -410,8 +415,13 @@ function renderQuestions() {
 
     const pText = document.createElement("span");
     pText.className = "prompt-block-text";
-    pCell.appendChild(pText);
 
+    // Capture edits when the user types in a prompt block
+    pText.addEventListener("input", () => {
+      customEdits.set(q.id, pText.textContent);
+    });
+
+    pCell.appendChild(pText);
     contentScroll.appendChild(pCell);
   });
 }
@@ -450,6 +460,9 @@ function handleSelection(questionId, optionIndex) {
   } else {
     selections.set(questionId, optionIndex);
   }
+
+  // Clear any custom edit when the selection changes
+  customEdits.delete(questionId);
 
   updateCardStyles(questionId);
   updatePromptBlock(questionId);
@@ -494,13 +507,15 @@ function updatePromptBlock(questionId) {
 
   const sel = selections.get(questionId);
   const q = QUESTIONS.find((q) => q.id === questionId);
+  const pText = pCell.querySelector(".prompt-block-text");
 
   if (sel === undefined || sel === -1) {
-    pCell.querySelector(".prompt-block-text").textContent = "";
+    pText.textContent = "";
+    pText.contentEditable = "false";
     pCell.classList.remove("active");
   } else {
-    pCell.querySelector(".prompt-block-text").textContent =
-      q.options[sel].promptText;
+    pText.textContent = q.options[sel].promptText;
+    pText.contentEditable = "plaintext-only";
     pCell.classList.add("active");
   }
 }
@@ -702,9 +717,14 @@ function buildPromptString() {
     const sel = selections.get(q.id);
     if (sel === undefined || sel === -1) return;
 
-    const option = q.options[sel];
-    if (option && option.promptText) {
-      blocks.push(option.promptText);
+    // Use the user's custom edit if they modified this block,
+    // otherwise fall back to the selected option's default text.
+    const text = customEdits.has(q.id)
+      ? customEdits.get(q.id)
+      : q.options[sel].promptText;
+
+    if (text) {
+      blocks.push(text);
     }
   });
 
