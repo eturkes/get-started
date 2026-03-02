@@ -12,7 +12,7 @@
 const AI_TOOLS = {
   claudeCode: {
     id: "claudeCode",
-    name: "Claude Code",
+    name: "Optimized for Claude Code",
     configFile: "CLAUDE.md",
     getScriptFilename(os) {
       if (os === "windows") return "install-claude-prompt.ps1";
