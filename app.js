@@ -514,6 +514,61 @@ const selections = new Map();
 const customEdits = new Map();
 
 // -----------------------------------------------------------------------
+// Persistence (localStorage)
+// -----------------------------------------------------------------------
+
+const STORAGE_KEY = "getstarted_state";
+
+/**
+ * Save current selections and custom edits to localStorage.
+ */
+function saveState() {
+  try {
+    const state = {
+      selections: Array.from(selections.entries()),
+      customEdits: Array.from(customEdits.entries()),
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    // localStorage unavailable or full — silently ignore
+  }
+}
+
+/**
+ * Restore selections and custom edits from localStorage.
+ * Returns true if state was restored, false otherwise.
+ */
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const state = JSON.parse(raw);
+    if (state.selections) {
+      for (const [k, v] of state.selections) selections.set(k, v);
+    }
+    if (state.customEdits) {
+      for (const [k, v] of state.customEdits) customEdits.set(k, v);
+    }
+    return selections.size > 0;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Clear all saved state from localStorage and reset the application.
+ */
+function resetState() {
+  selections.clear();
+  customEdits.clear();
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (e) {
+    // ignore
+  }
+}
+
+// -----------------------------------------------------------------------
 // DOM References
 // -----------------------------------------------------------------------
 const contentScroll = document.getElementById("content-scroll");
@@ -528,6 +583,7 @@ const guideClose = document.getElementById("guide-close");
 const toolLabelEl = document.getElementById("tool-label");
 const osSelectorEl = document.getElementById("os-selector");
 const includeInstallEl = document.getElementById("include-install");
+const btnReset = document.getElementById("btn-reset");
 
 // -----------------------------------------------------------------------
 // Render
@@ -598,6 +654,7 @@ function renderQuestions() {
       updatePlaceholder();
       updateProgress();
       updateDownloadButton();
+      saveState();
     });
 
     pCell.appendChild(pText);
@@ -683,6 +740,7 @@ function renderFreeformInputs(card, q) {
       updatePlaceholder();
       updateProgress();
       updateDownloadButton();
+      saveState();
       convertBtn.textContent = "Convert to Prompt";
       convertBtn.disabled = !textarea.value.trim();
     }
@@ -764,6 +822,7 @@ function handleSelection(questionId, optionIndex) {
   updatePlaceholder();
   updateProgress();
   updateDownloadButton();
+  saveState();
 }
 
 /**
@@ -848,13 +907,14 @@ function updatePlaceholder() {
 }
 
 /**
- * Enable or disable the download button.
+ * Enable or disable the download button and show/hide the reset button.
  */
 function updateDownloadButton() {
   const hasContent = QUESTIONS.some((q) => hasEffectiveContent(q.id));
   btnDownloadPrompt.disabled = !hasContent;
   btnDownloadScript.disabled = !hasContent;
   btnInstallGuide.disabled = !hasContent;
+  btnReset.classList.toggle("hidden", !hasContent);
 }
 
 // -----------------------------------------------------------------------
@@ -1312,7 +1372,58 @@ function initOSSelector() {
 // -----------------------------------------------------------------------
 // Initialize
 // -----------------------------------------------------------------------
+const hadSavedState = loadState();
 renderQuestions();
 initOSSelector();
+
+// Reset button — clears saved state and restores the initial UI
+btnReset.addEventListener("click", () => {
+  resetState();
+
+  QUESTIONS.forEach((q) => {
+    updateCardStyles(q.id);
+    updatePromptBlock(q.id);
+
+    if (q.type === "freeform") {
+      const card = contentScroll.querySelector(
+        `.question-card[data-question-id="${q.id}"]`
+      );
+      const textarea = card?.querySelector(".freeform-textarea");
+      if (textarea) {
+        textarea.value = "";
+        const convertBtn = card.querySelector(".convert-btn");
+        if (convertBtn) convertBtn.disabled = true;
+      }
+    }
+  });
+
+  updatePlaceholder();
+  updateProgress();
+  updateDownloadButton();
+});
+
+// If state was restored from localStorage, update all visuals to match
+if (hadSavedState) {
+  QUESTIONS.forEach((q) => {
+    updateCardStyles(q.id);
+    updatePromptBlock(q.id);
+
+    // Restore freeform textarea value
+    if (q.type === "freeform" && selections.has(q.id)) {
+      const card = contentScroll.querySelector(
+        `.question-card[data-question-id="${q.id}"]`
+      );
+      const textarea = card?.querySelector(".freeform-textarea");
+      if (textarea) {
+        textarea.value = selections.get(q.id);
+        const convertBtn = card.querySelector(".convert-btn");
+        if (convertBtn) convertBtn.disabled = !textarea.value.trim();
+      }
+    }
+  });
+}
+
+updatePlaceholder();
 updateProgress();
+updateDownloadButton();
 updateProgressBar();

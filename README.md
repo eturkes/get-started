@@ -130,12 +130,17 @@ The questionnaire covers 15 questions tailored for clinical and healthcare profe
 14. Conversational tone (professional, warm/encouraging, relaxed)
 15. Freeform customization (free text with optional AI-powered prompt conversion)
 
+## Prompt Saving
+
+All questionnaire selections and inline prompt edits are automatically saved to `localStorage` under the key `getstarted_state`. On return visits, the app restores the previous session — selected options, custom edits, and freeform textarea content are all preserved. A **Start Over** button appears next to the progress indicator when any question has been answered; clicking it clears the saved state and resets the UI to its initial empty state.
+
+No server or account is required. Data stays in the browser.
+
 ## Planned Features (Not Yet Implemented)
 
 These informed architectural decisions but are not built:
 
-- User accounts and prompt saving
-- Cross-device sync
+- User accounts for cross-device sync
 - AI-powered prompt improvement based on user habits (paid feature)
 
 ### Server Info
