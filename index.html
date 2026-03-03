@@ -27,6 +27,11 @@
       </div>
       <p class="server-info" id="server-info"></p>
     </div>
+    <div class="auth-row hidden" id="auth-row">
+      <button class="btn-auth" id="btn-sign-in" type="button">Sign In</button>
+      <span class="auth-user-email hidden" id="auth-user-email"></span>
+      <button class="btn-auth btn-auth-secondary hidden" id="btn-sign-out" type="button">Sign Out</button>
+    </div>
   </header>
 
   <!-- Main split-view container -->
@@ -111,6 +116,36 @@
     </div>
   </div>
 
+  <!-- Auth modal overlay -->
+  <div class="guide-overlay hidden" id="auth-overlay">
+    <div class="guide-modal auth-modal">
+      <div class="guide-header">
+        <h2 id="auth-modal-title">Sign In</h2>
+        <button class="guide-close" id="auth-close" type="button">&times;</button>
+      </div>
+      <div class="guide-body">
+        <form id="auth-form" autocomplete="on">
+          <div class="auth-field">
+            <label class="auth-label" for="auth-email">Email</label>
+            <input class="auth-input" id="auth-email" type="email" required autocomplete="email">
+          </div>
+          <div class="auth-field">
+            <label class="auth-label" for="auth-password">Password</label>
+            <input class="auth-input" id="auth-password" type="password" required minlength="6" autocomplete="current-password">
+          </div>
+          <p class="auth-error hidden" id="auth-error"></p>
+          <p class="auth-message hidden" id="auth-message"></p>
+          <button class="auth-submit" id="auth-submit" type="submit">Sign In</button>
+        </form>
+        <p class="auth-toggle-text">
+          <span id="auth-toggle-label">Don't have an account?</span>
+          <a class="auth-toggle-link" id="auth-toggle-link" href="#">Sign Up</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="env.js"></script>
   <script src="app.js"></script>
 </body>

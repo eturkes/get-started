@@ -175,6 +175,24 @@ function detectOS() {
 let selectedOS = detectOS();
 
 // -----------------------------------------------------------------------
+// Supabase Auth Configuration
+// -----------------------------------------------------------------------
+
+const supabaseConfigured =
+  typeof SUPABASE_URL !== "undefined" &&
+  SUPABASE_URL &&
+  SUPABASE_URL !== "your-supabase-url-here" &&
+  typeof SUPABASE_ANON_KEY !== "undefined" &&
+  SUPABASE_ANON_KEY &&
+  SUPABASE_ANON_KEY !== "your-supabase-anon-key-here";
+
+const sb = supabaseConfigured
+  ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+let currentUser = null;
+
+// -----------------------------------------------------------------------
 // Questionnaire Data
 //
 // Each question has an id, question text, and an array of options.
@@ -532,6 +550,7 @@ function saveState() {
   } catch (e) {
     // localStorage unavailable or full — silently ignore
   }
+  saveCloudState();
 }
 
 /**
@@ -566,6 +585,12 @@ function resetState() {
   } catch (e) {
     // ignore
   }
+  if (currentUser && sb) {
+    sb.from("saved_prompts")
+      .delete()
+      .eq("user_id", currentUser.id)
+      .then();
+  }
 }
 
 // -----------------------------------------------------------------------
@@ -584,6 +609,25 @@ const toolLabelEl = document.getElementById("tool-label");
 const osSelectorEl = document.getElementById("os-selector");
 const includeInstallEl = document.getElementById("include-install");
 const btnReset = document.getElementById("btn-reset");
+
+// Auth DOM refs
+const authRow = document.getElementById("auth-row");
+const btnSignIn = document.getElementById("btn-sign-in");
+const btnSignOut = document.getElementById("btn-sign-out");
+const authUserEmail = document.getElementById("auth-user-email");
+const authOverlay = document.getElementById("auth-overlay");
+const authModalTitle = document.getElementById("auth-modal-title");
+const authForm = document.getElementById("auth-form");
+const authEmailInput = document.getElementById("auth-email");
+const authPasswordInput = document.getElementById("auth-password");
+const authError = document.getElementById("auth-error");
+const authMessage = document.getElementById("auth-message");
+const authSubmit = document.getElementById("auth-submit");
+const authToggleLabel = document.getElementById("auth-toggle-label");
+const authToggleLink = document.getElementById("auth-toggle-link");
+const authClose = document.getElementById("auth-close");
+
+let authMode = "signin"; // "signin" or "signup"
 
 // -----------------------------------------------------------------------
 // Render
@@ -1370,21 +1414,201 @@ function initOSSelector() {
 })();
 
 // -----------------------------------------------------------------------
-// Initialize
+// Auth UI
 // -----------------------------------------------------------------------
-const hadSavedState = loadState();
-renderQuestions();
-initOSSelector();
 
-// Reset button — clears saved state and restores the initial UI
-btnReset.addEventListener("click", () => {
-  resetState();
+function showAuthRow() {
+  if (supabaseConfigured) authRow.classList.remove("hidden");
+}
 
+function updateAuthUI() {
+  if (!supabaseConfigured) return;
+  if (currentUser) {
+    btnSignIn.classList.add("hidden");
+    authUserEmail.textContent = currentUser.email;
+    authUserEmail.classList.remove("hidden");
+    btnSignOut.classList.remove("hidden");
+  } else {
+    btnSignIn.classList.remove("hidden");
+    authUserEmail.classList.add("hidden");
+    btnSignOut.classList.add("hidden");
+  }
+}
+
+function openAuthModal(mode) {
+  authMode = mode || "signin";
+  authForm.reset();
+  authError.classList.add("hidden");
+  authMessage.classList.add("hidden");
+  authSubmit.disabled = false;
+
+  if (authMode === "signup") {
+    authModalTitle.textContent = "Sign Up";
+    authSubmit.textContent = "Sign Up";
+    authToggleLabel.textContent = "Already have an account?";
+    authToggleLink.textContent = "Sign In";
+    authPasswordInput.autocomplete = "new-password";
+  } else {
+    authModalTitle.textContent = "Sign In";
+    authSubmit.textContent = "Sign In";
+    authToggleLabel.textContent = "Don't have an account?";
+    authToggleLink.textContent = "Sign Up";
+    authPasswordInput.autocomplete = "current-password";
+  }
+
+  authOverlay.classList.remove("hidden");
+  authEmailInput.focus();
+}
+
+function closeAuthModal() {
+  authOverlay.classList.add("hidden");
+}
+
+// -----------------------------------------------------------------------
+// Auth Event Handlers (gated on supabaseConfigured)
+// -----------------------------------------------------------------------
+
+if (supabaseConfigured) {
+  btnSignIn.addEventListener("click", () => openAuthModal("signin"));
+
+  btnSignOut.addEventListener("click", async () => {
+    await sb.auth.signOut();
+    currentUser = null;
+    updateAuthUI();
+  });
+
+  authToggleLink.addEventListener("click", (e) => {
+    e.preventDefault();
+    openAuthModal(authMode === "signin" ? "signup" : "signin");
+  });
+
+  authClose.addEventListener("click", closeAuthModal);
+
+  authOverlay.addEventListener("click", (e) => {
+    if (e.target === authOverlay) closeAuthModal();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !authOverlay.classList.contains("hidden")) {
+      closeAuthModal();
+    }
+  });
+
+  authForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = authEmailInput.value.trim();
+    const password = authPasswordInput.value;
+
+    authError.classList.add("hidden");
+    authMessage.classList.add("hidden");
+    authSubmit.disabled = true;
+    authSubmit.textContent = authMode === "signup" ? "Signing up\u2026" : "Signing in\u2026";
+
+    let result;
+    if (authMode === "signup") {
+      result = await sb.auth.signUp({ email, password });
+    } else {
+      result = await sb.auth.signInWithPassword({ email, password });
+    }
+
+    if (result.error) {
+      authError.textContent = result.error.message;
+      authError.classList.remove("hidden");
+      authSubmit.disabled = false;
+      authSubmit.textContent = authMode === "signup" ? "Sign Up" : "Sign In";
+      return;
+    }
+
+    if (authMode === "signup" && !result.data.session) {
+      authMessage.textContent = "Check your email to confirm your account.";
+      authMessage.classList.remove("hidden");
+      authSubmit.disabled = false;
+      authSubmit.textContent = "Sign Up";
+      return;
+    }
+
+    currentUser = result.data.user;
+    updateAuthUI();
+    closeAuthModal();
+    await loadCloudState();
+    refreshAllVisuals();
+  });
+}
+
+// -----------------------------------------------------------------------
+// Cloud Persistence (Supabase)
+// -----------------------------------------------------------------------
+
+let cloudSaveTimer = null;
+
+function saveCloudState() {
+  if (!currentUser || !sb) return;
+  clearTimeout(cloudSaveTimer);
+  cloudSaveTimer = setTimeout(async () => {
+    try {
+      await sb.from("saved_prompts").upsert({
+        user_id: currentUser.id,
+        selections: Array.from(selections.entries()),
+        custom_edits: Array.from(customEdits.entries()),
+      }, { onConflict: "user_id" });
+    } catch (e) {
+      // silently ignore cloud save errors
+    }
+  }, 1500);
+}
+
+async function loadCloudState() {
+  if (!currentUser || !sb) return;
+  try {
+    const { data } = await sb
+      .from("saved_prompts")
+      .select("selections, custom_edits")
+      .eq("user_id", currentUser.id)
+      .maybeSingle();
+
+    if (!data) return;
+
+    selections.clear();
+    customEdits.clear();
+
+    if (data.selections) {
+      for (const [k, v] of data.selections) selections.set(k, v);
+    }
+    if (data.custom_edits) {
+      for (const [k, v] of data.custom_edits) customEdits.set(k, v);
+    }
+
+    // Sync back to localStorage
+    try {
+      const state = {
+        selections: Array.from(selections.entries()),
+        customEdits: Array.from(customEdits.entries()),
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      // ignore
+    }
+  } catch (e) {
+    // silently ignore cloud load errors
+  }
+}
+
+function refreshAllVisuals() {
   QUESTIONS.forEach((q) => {
     updateCardStyles(q.id);
     updatePromptBlock(q.id);
 
-    if (q.type === "freeform") {
+    if (q.type === "freeform" && selections.has(q.id)) {
+      const card = contentScroll.querySelector(
+        `.question-card[data-question-id="${q.id}"]`
+      );
+      const textarea = card?.querySelector(".freeform-textarea");
+      if (textarea) {
+        textarea.value = selections.get(q.id);
+        const convertBtn = card.querySelector(".convert-btn");
+        if (convertBtn) convertBtn.disabled = !textarea.value.trim();
+      }
+    } else if (q.type === "freeform") {
       const card = contentScroll.querySelector(
         `.question-card[data-question-id="${q.id}"]`
       );
@@ -1400,30 +1624,52 @@ btnReset.addEventListener("click", () => {
   updatePlaceholder();
   updateProgress();
   updateDownloadButton();
+}
+
+// -----------------------------------------------------------------------
+// Initialize
+// -----------------------------------------------------------------------
+const hadSavedState = loadState();
+renderQuestions();
+initOSSelector();
+showAuthRow();
+
+// Reset button — clears saved state and restores the initial UI
+btnReset.addEventListener("click", () => {
+  resetState();
+  refreshAllVisuals();
 });
 
 // If state was restored from localStorage, update all visuals to match
 if (hadSavedState) {
-  QUESTIONS.forEach((q) => {
-    updateCardStyles(q.id);
-    updatePromptBlock(q.id);
-
-    // Restore freeform textarea value
-    if (q.type === "freeform" && selections.has(q.id)) {
-      const card = contentScroll.querySelector(
-        `.question-card[data-question-id="${q.id}"]`
-      );
-      const textarea = card?.querySelector(".freeform-textarea");
-      if (textarea) {
-        textarea.value = selections.get(q.id);
-        const convertBtn = card.querySelector(".convert-btn");
-        if (convertBtn) convertBtn.disabled = !textarea.value.trim();
-      }
-    }
-  });
+  refreshAllVisuals();
 }
 
 updatePlaceholder();
 updateProgress();
 updateDownloadButton();
 updateProgressBar();
+
+// Async session check — cloud state overwrites local if user is logged in
+if (supabaseConfigured) {
+  (async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session?.user) {
+      currentUser = session.user;
+      updateAuthUI();
+      await loadCloudState();
+      refreshAllVisuals();
+    }
+  })();
+
+  sb.auth.onAuthStateChange((event, session) => {
+    if (event === "SIGNED_IN" && session?.user) {
+      currentUser = session.user;
+      updateAuthUI();
+      loadCloudState().then(refreshAllVisuals);
+    } else if (event === "SIGNED_OUT") {
+      currentUser = null;
+      updateAuthUI();
+    }
+  });
+}

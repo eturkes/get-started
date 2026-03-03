@@ -10,7 +10,7 @@ No build step, no package dependencies. Open `index.html` in a browser. Fonts lo
 index.html       — Page shell: header, theme toggle, 2-col grid headers, scrollable content area, download bar
 style.css        — All styling: light/dark themes, CSS Grid layout, responsive breakpoints
 app.js           — All logic: data, state, rendering, theme toggle, ZIP generation, downloads
-env.js.example   — Template for Gemini API key (copy to env.js)
+env.js.example   — Template for API keys: Gemini and Supabase (copy to env.js)
 .gitignore       — Excludes env.js from version control
 ```
 
@@ -134,13 +134,52 @@ The questionnaire covers 15 questions tailored for clinical and healthcare profe
 
 All questionnaire selections and inline prompt edits are automatically saved to `localStorage` under the key `getstarted_state`. On return visits, the app restores the previous session — selected options, custom edits, and freeform textarea content are all preserved. A **Start Over** button appears next to the progress indicator when any question has been answered; clicking it clears the saved state and resets the UI to its initial empty state.
 
-No server or account is required. Data stays in the browser.
+### Cloud Sync (Optional)
+
+When Supabase is configured, a **Sign In** button appears centered in the header. Users can create accounts and sign in to sync their selections across devices. The data flow:
+
+- **Save**: Each selection change writes to `localStorage` (sync) and triggers a debounced (1.5s) upsert to the Supabase `saved_prompts` table.
+- **Page load**: `localStorage` loads first (instant render), then an async session check loads cloud data if the user is signed in. Cloud data overwrites local data when present, preventing stale local state from overwriting newer cloud data.
+- **Login**: Cloud state is loaded and overwrites local state.
+- **Start Over**: Clears both `localStorage` and the cloud row.
+
+The entire auth feature is gated on `supabaseConfigured` — if keys are not set, the app works exactly as before with local-only storage.
+
+#### Supabase Setup
+
+1. Create a project at [supabase.com](https://supabase.com)
+2. Run the following SQL in the Supabase SQL editor:
+
+```sql
+create table public.saved_prompts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  selections jsonb not null default '[]'::jsonb,
+  custom_edits jsonb not null default '[]'::jsonb,
+  updated_at timestamptz not null default now(),
+  unique (user_id)
+);
+create index idx_saved_prompts_user_id on public.saved_prompts (user_id);
+
+alter table public.saved_prompts enable row level security;
+create policy "read own" on public.saved_prompts for select using (auth.uid() = user_id);
+create policy "insert own" on public.saved_prompts for insert with check (auth.uid() = user_id);
+create policy "update own" on public.saved_prompts for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "delete own" on public.saved_prompts for delete using (auth.uid() = user_id);
+
+create or replace function public.handle_updated_at() returns trigger as $$
+begin new.updated_at = now(); return new; end; $$ language plpgsql;
+create trigger set_updated_at before update on public.saved_prompts for each row execute function public.handle_updated_at();
+```
+
+3. Copy your project URL and anon key from Settings > API into `env.js`
+
+Email confirmation behavior is configurable in the Supabase dashboard under Authentication > Providers > Email.
 
 ## Planned Features (Not Yet Implemented)
 
 These informed architectural decisions but are not built:
 
-- User accounts for cross-device sync
 - AI-powered prompt improvement based on user habits (paid feature)
 
 ### Server Info
