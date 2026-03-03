@@ -1544,18 +1544,29 @@ let cloudSaveTimer = null;
 function saveCloudState() {
   if (!currentUser || !sb) return;
   clearTimeout(cloudSaveTimer);
-  cloudSaveTimer = setTimeout(async () => {
-    try {
-      await sb.from("saved_prompts").upsert({
-        user_id: currentUser.id,
-        selections: Array.from(selections.entries()),
-        custom_edits: Array.from(customEdits.entries()),
-      }, { onConflict: "user_id" });
-    } catch (e) {
-      // silently ignore cloud save errors
-    }
-  }, 1500);
+  cloudSaveTimer = setTimeout(() => flushCloudSave(), 1500);
 }
+
+async function flushCloudSave() {
+  if (!currentUser || !sb) return;
+  clearTimeout(cloudSaveTimer);
+  cloudSaveTimer = null;
+  try {
+    await sb.from("saved_prompts").upsert({
+      user_id: currentUser.id,
+      selections: Array.from(selections.entries()),
+      custom_edits: Array.from(customEdits.entries()),
+    }, { onConflict: "user_id" });
+  } catch (e) {
+    // silently ignore cloud save errors
+  }
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden" && cloudSaveTimer) {
+    flushCloudSave();
+  }
+});
 
 async function loadCloudState() {
   if (!currentUser || !sb) return;
